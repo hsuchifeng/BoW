@@ -1,0 +1,9 @@
+* 提取图像信息
+该目录下的文件包括图像文件夹（软链接)img, 用于输出图像信息的sh脚本 readImgInfo.sh,
+用于将CSV信息导入数据库的sql语句 inputImgInfo.sql
+
+** 导入流程
+1. 使用readImgInfo.sh 生成CSV文件，
+   eg: ./readImgInfo.sh img/PI100 PI100> PI100.csv
+2. 使用inputImgInfo.sh 将上述步骤生成的csv文件导入数据库
+   eg: ./inputImgInfo.sh PI100.csv

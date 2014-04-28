@@ -1,0 +1,23 @@
+//image retrivial
+package dmir;
+option java_package="com.dmir";
+option java_outer_classname = "Communicator";
+message Request{
+	optional string imgPath = 1;
+	repeated int32  id  = 2;
+	repeated Color needColor = 3;
+	repeated Color denyColor = 4;
+        optional bytes image     = 5;
+	
+	message Color{
+		required int32 r = 1;
+		required int32 g = 2;
+		required int32 b = 3;
+	}
+}
+
+message Result{ 
+	repeated string imgPath = 1;
+	repeated int32 id = 2;
+	repeated double precision = 3;
+}

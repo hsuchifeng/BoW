@@ -1,0 +1,5 @@
+configuration.ini是颜色检索与颜色赛选的配置文件，需要放在可执行文件上一层位置
+
+颜色检索需要调用的函数在mathBaseColor.h中
+
+颜色筛选需要调用的函数在cFilter.h中

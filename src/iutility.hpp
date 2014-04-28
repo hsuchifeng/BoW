@@ -1,0 +1,359 @@
+#ifndef IUTILITY_HPP
+
+#define IUTILITY_HPP
+/*this file include some utility function
+to use them you should include the utility.hpp
+*/
+
+#include <cmath>
+#include <vector>
+#include <iostream>
+#include <stdexcept>
+#include <fstream>
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/nonfree/features2d.hpp"
+#include "opencv2/features2d/features2d.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+
+#include "exData.hpp" //exData
+
+enum FEATTYPE{ENUM_SIFT,ENUM_SURF};
+
+template<class P>
+float
+squarCosSimilarity(const P &a1,const  P &a2, int d)
+{
+    //calculate the squar cosin similarity of two d dimension vector
+    //@param d is the demenstration of the vector
+    //type P must operator[]
+    int i;
+    float as1 = 0.0, as2 = 0.0, b1 = 0.0;
+    for(i = 0; i < d; ++i){
+        b1 += a1[i] * a2[i];
+        as1 += a1[i] * a1[i];
+        as2 += a2[i] * a2[i];
+    }
+    return (b1 * b1) / (as1 * as2);
+    
+}//squarCosSimilarity() end
+
+template<class P>
+inline float
+cosS(const P &a1,const P &a2, int d)
+{
+  return sqrt(squarCosSimilarity(a1,a2,d));
+}//
+
+
+template<class P>
+float jointSimilarity(const P &a1,const P &a2, int d) 
+{
+    //calculate the joint similarity of two d dimension vector
+  int i;
+  float  ups, lows;
+  for(lows = ups = 0.0, i = 0; i < d; ++i){
+    ups += (a1[i] >= a2[i] ? a2[i] : a1[i]);
+    //lows +=(a1[i] >= a2[i] ? a1[i] : a2[i]);
+    //lows +=a2[i];
+    lows += a1[i];
+  }
+
+  return ups/lows;
+}
+
+  
+
+template<class T> inline float
+squarDistance(const T &a1, const T &a2, int d)
+{
+    //template function  squar of Euclidean distance
+    //assume type or class T has operator[], "point"
+    //@parameter d is the dimension of the 'vector'
+    int i;
+    float sum;
+    for(sum = i = 0; i < d; ++i )
+        sum += (a1[i] - a2[i])*(a1[i] - a2[i]);
+    return sum;
+}//function squarDistance() end
+
+int
+calcCodewords(const std::vector<std::vector<float> > &feats, 
+              const std::vector<std::vector<float> >  &center,
+              std::vector<float> &res,std::vector<float> &idf,
+              int fDemension = 0, bool usingtf=true)
+	 
+{
+    //calculate the codewords for an image
+    //final result is k dimension which also means center has 'k' line
+    //return 0 if success
+  //if usingtf is true(not 0) then use tf default use tf
+    int i,nearest_index;
+    float nearest_d, cur_d;
+    std::vector< std::vector<float> >::const_iterator it;
+    int cwDemension,featsDemension;
+    
+    cwDemension = center.size();
+    if(!cwDemension)//center is empty
+        return -1;
+    featsDemension =(fDemension == 0)?center[0].size(): fDemension;
+    //initialize the result vector
+    res.clear();
+    res.assign(cwDemension, 0);
+    //go through all features
+    //O(n^2)
+    std::cerr << "feat's demension = " << featsDemension
+              << "\tcodewords demension = " << cwDemension
+              << "\timage feats count = " << feats.size() << std::endl;
+    for(it = feats.begin(); it != feats.end(); ++it){
+        //init use the center[0]
+        nearest_index = 0;
+        nearest_d = squarDistance(*it, center[0],featsDemension);
+        //find nearest center
+        for(i = 1; i < cwDemension; ++i){
+            cur_d = squarDistance(*it, center[i], featsDemension);
+            if(nearest_d >= cur_d){
+                nearest_d = cur_d;
+                nearest_index = i;
+            }
+        }
+        //store result int
+        ++res[nearest_index];
+    }
+#if 0
+    //calculate idf
+    for(i = 0; i < cwDemension; ++i)
+        if(res[i] > 0)
+            ++idf[i];
+#endif
+
+    //judge if use tf
+    if(usingtf){
+      //transfer to 100% -> term fruency(tf)
+      for(i = 0; i < cwDemension; ++i)
+        res[i] = res[i] / feats.size();
+    }
+    
+    return 0;
+}//calcCodewords end
+
+
+//计算特征结果放入feats,位置信息放在pts
+int
+calcFeats(const char *img_file, std::vector<std::vector<float> > &feats,
+          std::vector<float> &x,std::vector<float> &y,int type)
+{
+    //the features are stored in feats
+    //return 0 if success
+  //type can be 0(SURF) or 1(SIFT)
+    cv::Mat img = cv::imread(img_file,0);
+    cv::Mat mask, descr;
+    cv::SIFT sift;
+    cv::SURF surf;
+    std::vector<cv::KeyPoint> kps;
+    float *dp;
+    int n, m, i, j; //m = 128
+    if(!img.data){
+        return -1;
+    }
+
+    //calculate  features
+    if(type == ENUM_SIFT)
+      sift(img,mask,kps,descr); //descr.depth() == sizeof(float)
+    else if(type == ENUM_SURF)
+      surf(img,mask,kps,descr);
+    else
+      return 1;
+    n = descr.rows;
+    m = descr.cols;
+    //check whether the image has features
+    if(n == 0 || descr.empty())
+      return 2;
+    //store features
+    feats.clear();
+    feats.resize(n);
+    x.clear();
+    y.clear();
+    float f;
+    for(i = 0; i < n; ++i){
+      dp = descr.ptr<float>(i);
+      // std::cerr<<"("<<kps[i].pt.x<<","<<kps[i].pt.y<<")\n";
+      f=kps[i].pt.x;
+      x.push_back(f);
+      f=kps[i].pt.y;
+      y.push_back(f);
+      for(j = 0; j < m; ++j)
+        feats[i].push_back(dp[j]);
+    }
+    return 0;
+}//calcFeats(...) end
+inline int
+calcSiftFeats(const char *img, std::vector<std::vector<float> > &res)
+{
+  std::vector<float> x,y;
+  return calcFeats(img,res,x,y,ENUM_SIFT);
+}
+inline int
+calcSiftFeats(const char *img, std::vector<std::vector<float> > &res,
+              std::vector<float> &x, std::vector<float> &y)
+{
+  return calcFeats(img,res,x,y,ENUM_SIFT);
+}
+inline int 
+calcSurfFeats(const char *img,std::vector<std::vector<float> > &res,
+              std::vector<float> &x, std::vector<float> &y)
+{
+  return calcFeats(img,res,x,y,ENUM_SURF);
+}
+
+int
+calcGrtFeats(char *imgPath, std::vector<std::vector<float> > &feats)
+{
+/*
+calcute gradient features of @imgPath
+Suppose that p(x,y) is the value of point (x,y) in the image.
+Define gradient features of point(x,y) as a two demension vector
+whose first element is
+sqrt((p(x+1,y)-p(x-1,y))^2+(p(x,y+1)-p(x,y-1))^2)
+and second element is the direction of the gradient, that is
+arctan((p(x+1,y)-p(x-1,y)) / (p(x,y+1)-p(x,y-1)))
+Note that if the first element shoud not include 0
+if success return 0
+ */
+    std::vector<float> featElem; // a feat
+    cv::Mat kernel; //convolution kernel 
+    cv::Mat xgrt, ygrt; //x and y coordinate gradient
+    cv::Mat m = cv::imread(imgPath, 0); //load image with gray scale mode
+    if(!m.data)//cannot read imgPath
+        return -1;
+    //init feats
+    feats.clear();
+    return 0;
+    
+}
+
+
+
+struct resultIndex
+{
+  int id;
+  float s; //相似度
+};
+
+static bool cmpDecrease(const resultIndex &c1, const resultIndex &c2){
+        return c1.s > c2.s;
+}
+//match visual word histogram in exData::image
+//@n is the top n image to return
+std::vector<int>
+matchWord(const std::vector<std::vector<float> > &userFeats,
+          const exData &db,int n = 10, float s = 0.1){
+  int i; // 循环变量
+  int d; //词汇维度
+  resultIndex tmp; //临时结果
+  std::vector<resultIndex> vtmp; //临时结果
+  std::vector<float> idf; //not use
+  std::vector<int>  result;//result
+  std::vector<float> userWord;
+    
+  {    //计算userfeats 词汇频率
+    i = calcCodewords(userFeats,db.clusterCenter,userWord,idf);
+    if(i || userWord.empty())
+      throw std::invalid_argument("error:empty calc user image word");
+
+    //使用用户词汇频率作为维度
+    d = userWord.size();
+    vtmp.clear();
+    std::cerr <<"db size:" <<db.image.size() <<std::endl;
+    for(i = 0; i < db.image.size(); ++i){//每张图像
+      //using cosin similarity
+      if(db.image[i].word.size() != d)
+      {
+        std::cerr <<"cur image " << i<< std::endl;
+        std::cerr <<"word size :" <<db.image[i].word.size() <<std::endl;
+      }
+      
+      tmp.s = cosS(db.image[i].word, userWord, d);
+      tmp.id = i; 
+      vtmp.push_back(tmp);
+    }
+    std::cerr <<"image number" << i << std::endl;
+    //sort the result
+    std::sort(vtmp.begin(), vtmp.end(), cmpDecrease);
+    //提取前面n个结果
+    result.clear();
+    for(i = 0; i < n && vtmp[i].s > s; ++i)
+      result.push_back(vtmp[i].id);
+  }
+
+  return result;
+}
+
+#if 0
+int
+calcHumoments(const char *imgPath, std::vector<float> &vec){
+  /*calculate all hu moments  to vec
+    if success return 0
+  */
+  float hu[7];
+  cv::Moments mnts;
+  cv::Mat m = cv::imread(imgPath, 0);
+
+  //check
+  if(!m.data)
+    return -1;
+
+  mnts = cv::moments(m);
+  cv::HuMoments(mnts, hu);
+  vec.clear();
+  for(int i = 0; i < 7; ++i)
+    vec.push_back(hu[i]);   //  res.push_back(vec);
+  
+  return 0;
+}
+#endif
+
+//read database image info configure file
+//configure file format
+// key =value
+//#开头的为注释
+void readConf(std::map<std::string,std::string> &res,
+              const char *file)
+{
+  std::ifstream ifs(file);
+  std::stringstream sst;
+  std::string s, key,value;
+  char c;
+  int i = 0; //read line
+  if(!file)
+  {
+    std::cerr<<"error:open configure file:" <<file << "\n";
+    exit(1);
+  }
+  
+  while(getline(ifs,s))
+  {
+    ++i; 
+    if(s[0] == '#' ) //注释
+      continue;
+    sst.str("");
+    sst.clear();
+    sst << s;
+    sst >> key;
+    sst >> c;
+    if(c != '=' )
+    {
+      std::cerr<<"error:read configure file:"<<file<<":line " << i<<"\n";
+      exit(1);
+    }
+    getline(sst,value);
+    //assign
+    res[key] = value;
+  }
+}//readConf
+
+#endif//iutility.hpp end
+
+
+
+

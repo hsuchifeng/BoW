@@ -77,7 +77,7 @@ private:
 
   enum CMDT {connection,tuple,task};   //数据库SQL语句类型
   typedef   std::vector<std::vector<float> >  Matrix;  //二维数组
-
+  std::string condition; //图片集
   struct ImageInfo  //单张图像的信息
   {
     std::string imagePath; //图像路径
@@ -110,7 +110,8 @@ public:
   
   //默认构造函数，从数据库中加载所有图像的路径及文件名(不含扩展名)
   //s 选择图像数据的where语句
-  exData(const char *s =NULL):hbin(0),sbin(0),pgConn(NULL), pgRes(NULL)
+  exData(const char *s =NULL):condition(s),hbin(0),sbin(0)
+                             ,pgConn(NULL), pgRes(NULL)
   {
     getInfo(s); //获取图像路径信息
     //temp !!!

@@ -18,7 +18,7 @@ using namespace std;
 int
 main(int argc, char **argv){
   if(argc != 2){
-    cerr <<"ussage:" << argv[0] << "<configure_file>\n";
+    cerr <<"ussage:" << argv[0] << " <configure_file>\n";
     return 1;
   }
   map<string,string> conf; //配置信息

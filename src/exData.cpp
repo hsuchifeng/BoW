@@ -446,7 +446,7 @@ void exData::writeCenter()
   std::string sql; //待执行的SQL语句
   std::stringstream sst;
   std::string s;
-  
+  char *cons = PQescapeLiteral(pgConn,condition.c_str(),condition.length());
   {
     connectDB(CONNECT_INFO);
     //keep atom
@@ -455,17 +455,16 @@ void exData::writeCenter()
     //先删除
     sst.str("");
     sst.clear();
-    sst << "delete from SIFTClusterCenter where k=" << k << ";" ;
+    sst << "delete from SIFTClusterCenter where k=" << k
+        <<" AND d="<<d <<" AND condition="   <<cons <<";" ;
     pgRes = PQexec(pgConn, sst.str().c_str());  
     statusOK("error:exec delete from SIFTClusterCenter", task);    
-    
-    for(i = 0; i < k; ++i) //每个特征
-    {
+    for(i = 0; i < k; ++i){ //每个特征
       //insert
       sst.str("");
       sst.clear();
-      sst << "insert into SIFTClusterCenter(k,d,center) values "
-          <<"(" << k << "," << d << ",";
+      sst << "insert into SIFTClusterCenter(k,d,condition,center) values "
+          <<"(" << k << "," << d << "," << cons <<",";
       //start with '{
       sst << "'{";
       for(j = 0; j < d - 1; ++j) //leave last element

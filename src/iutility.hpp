@@ -313,9 +313,11 @@ calcHumoments(const char *imgPath, std::vector<float> &vec){
 }
 #endif
 
-//read database image info configure file
+//read configure file information
 //configure file format
-// key =value
+//key="value"
+//value should not contain quote "
+//spaces are ignored
 //#开头的为注释
 void readConf(std::map<std::string,std::string> &res,
               const char *file)
@@ -323,37 +325,56 @@ void readConf(std::map<std::string,std::string> &res,
   std::ifstream ifs(file);
   std::stringstream sst;
   std::string s, key,value;
+  std::size_t st,st2;
+  bool assign=false;
   char c;
   int i = 0; //read line
-  if(!file)
-  {
-    std::cerr<<"error:open configure file:" <<file << "\n";
+  if(!ifs){
+    std::cerr<<"error:open configuration file:" <<file << "\n";
     exit(1);
   }
   
-  while(getline(ifs,s))
-  {
-    ++i; 
-    if(s[0] == '#' ) //注释
-      continue;
+  while(getline(ifs,s)){
+    ++i;
+    sst.str("");
+    sst.clear();
+    sst << s;
+    while(sst.good()){ //跳过空格
+      c = sst.get();
+      if(c == ' ' || c == '\n' || c =='\t')
+        continue;
+      sst.putback(c);
+      break;
+    }//while
+    getline(sst,s);
+    //读取key
+    //找到第一个 =
+    st = s.find('=');
+    if(st == std::string::npos){
+      std::cerr<< "error:read configure file:line" << i <<"\n";
+      exit(1);
+    }
+    s[st] = ' ';
     sst.str("");
     sst.clear();
     sst << s;
     sst >> key;
-    sst >> c;
-    if(c != '=' )
-    {
-      std::cerr<<"error:read configure file:"<<file<<":line " << i<<"\n";
+    getline(sst,s);
+    //读取value
+    st = s.find_first_of('\"');
+    if(st == std::string::npos){
+      std::cerr<< "error:read configure file:line" << i <<"\n";
       exit(1);
     }
-    getline(sst,value);
-    //assign
+    s[st] = ' ';
+    st2 = s.find_last_of('\"');
+    if(st2 == std::string::npos){
+      std::cerr<< "error:read configure file:line" << i <<"\n";
+      exit(1);
+    }
+    value = s.substr(st+1, st2-st-1);
     res[key] = value;
-  }
+  }//while
 }//readConf
 
 #endif//iutility.hpp end
-
-
-
-

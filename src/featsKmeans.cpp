@@ -1,6 +1,6 @@
 /****************************************
 对SIFT特征进行聚类,并将结果写入数据库
-聚类参数从配置文件获取
+聚类参数从配置文件获取,包括图像集，k,精度，最大迭代次数
 ****************************************/
 
 #include <iostream>
@@ -17,12 +17,17 @@
 using namespace std;
 int
 main(int argc, char **argv){
-  if(argc != 2){
-    cerr <<"ussage:" << argv[0] << " <configure_file>\n";
+  if(argc != 2 && argc != 3){
+    cerr <<"features cluster using kmeans\n";
+    cerr <<"ussage:" << argv[0] << " <configure_file> [sift_csv_file]\n";
+    cerr <<"if no sift_csv_file specific,features in database will be used\n";
     return 1;
   }
   map<string,string> conf; //配置信息
   readConf(conf,argv[1]);
+  char *siftFile=NULL;
+  if(argc == 3 )
+    siftFile = argv[2];
   //测试配置信息
   if(conf["image"].empty()) //图像集
     cerr<<"using all image in database\n";
@@ -64,13 +69,15 @@ main(int argc, char **argv){
 
     //读取SIFT,返回读取的SIFT特征的数目
     cerr<<"reading SIFT feature\n";
-    row = db.readSIFT();
+    row = db.readSIFT(siftFile);
     col = db.image[0].SIFTFeat[0].size();
     //初始化用于聚类的矩阵mfeats
     mfeats = cv::Mat(row,col,cv::DataType<float>::type); 
     //将特征类型vector<vector<float> > 转换为 cv::Mat
     for(crow = i = 0; i < db.image.size();++i) {//每张图片
       for(j = 0; j < db.image[i].SIFTFeat.size(); ++j, ++crow){//每个特征
+        if(db.image[i].SIFTFeat[j].empty()) //no features element
+          throw invalid_argument("error:no features");
         f = mfeats.ptr<float>(crow); //data is plain in Mat
         for(n = 0; n < db.image[i].SIFTFeat[j].size(); ++n) //每个元素
           f[n] = db.image[i].SIFTFeat[j][n];

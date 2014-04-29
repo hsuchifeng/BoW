@@ -1,5 +1,7 @@
 /****************************************
-读取SIFT特征，输出到标准输出
+读取SIFT特征，输出到标准输出,CSV格式(no header)
+从配置文件中读取图片集信息
+Zhifeng 201404 
 ****************************************/
 #include <iostream>
 #include <string>
@@ -17,7 +19,7 @@ main(int argc, char **argv)
   if(argc != 2) //check parameter
   {
     cerr<<"calculate SIFT feature and output CSV format to stdout\n"
-        <<"ussage:" <<argv[0] << " <configure_file>\n";
+        <<"ussage:" <<argv[0] << " <configuration_file>\n";
     return 1;
   }
   

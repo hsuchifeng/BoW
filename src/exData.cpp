@@ -1,12 +1,13 @@
 #include "exData.hpp"
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <sstream>
+#include <fstream>
 #include <stdexcept>
 #include <cstdlib>  //atoi
 #include <map>
-#include <iostream>
 extern "C"
 {
 #include <libpq-fe.h>
@@ -79,7 +80,7 @@ void exData::getInfo(const char * condiction)
 
 //读取数据库中的所有SIFT特征
 //返回读取的个数
-int exData::readSIFT()
+long exData::readSIFTFromDB()
 {
   int res = 0; //返回值
   int nrow; //结果的行数和列数
@@ -480,4 +481,66 @@ void exData::writeCenter()
     statusOK("error:END", task);
   }  
 }//writeCenter
+
+//move to next digit
+bool nextDigit(std::stringstream &ist){
+  int c;
+  while(ist.good()){
+    c = ist.get();
+    if(isdigit(c)){
+      ist.putback(c);
+      break;
+    }
+  }
+  return ist.good();
+}//nextDigit
+
+//read SIFT features from file
+//the file is CSV format with header "imageID,pos,feature"
+//SIFT features are read to exData::image[i].SIFTFeat
+//return the number of features read
+long exData::readSIFTFromFile(const char *csv){
+  long r=0; //return value
+  long i; //index
+  long n = image.size(); //image count
+  long imageID; //imageID in database
+  float f;
+  std::ifstream ifs(csv);
+  std::string s;
+  std::stringstream sst;
+  std::vector<float> feat;
+  
+  if(!ifs) //check parameter
+    return 0;
+  for(i = 0; i < n; ++i){//clear origin data
+    image[i].SIFTFeat.clear();
+    image[i].SIFTx.clear();
+    image[i].SIFTy.clear();
+  }
+  getline(ifs,s); //ignore first line(header)
+  while(getline(ifs,s)){//deal every line in the CSV file
+    sst.clear(); //clear status flag
+    sst.str(""); //empty content
+    sst << s;
+    sst >> imageID; //extract current imageID
+    if(!validID(imageID)) //check the imageID
+      continue;
+    nextDigit(sst);
+    sst >> f; //SIFTx
+    image[idToSub[imageID]].SIFTx.push_back(f);
+    nextDigit(sst);
+    sst >> f; //SIFTy
+    image[idToSub[imageID]].SIFTy.push_back(f);
+    //extract features
+    feat.clear();
+    while(nextDigit(sst)){
+      sst >> f;
+      feat.push_back(f);
+    }
+    image[idToSub[imageID]].SIFTFeat.push_back(feat);
+    ++r; //count + 1
+  }//while
+  return r;
+}//readSIFTFromFile
+
 

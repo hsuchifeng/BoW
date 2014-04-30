@@ -377,4 +377,8 @@ void readConf(std::map<std::string,std::string> &res,
   }//while
 }//readConf
 
+//test the configuration for string s
+bool hasValue(std::map<std::string,std::string> conf, const char *s){
+  return conf.end() != conf.find(s);
+}
 #endif//iutility.hpp end

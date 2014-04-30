@@ -18,24 +18,24 @@ extern "C"
 void exData::statusOK(const char *mesg,CMDT ct )
 {
 #define    THROW throw std::invalid_argument(std::string(mesg) + std::string("\n") +PQerrorMessage(pgConn) )
-  switch(ct)
-  {
-  case connection:
-    //检测状态
-    if(CONNECTION_OK !=  PQstatus(pgConn))
-      THROW;
-    break;
-  case tuple :
-    if(PGRES_TUPLES_OK != PQresultStatus(pgRes))
-      THROW;
-    break;
+switch(ct)
+ {
+ case connection:
+   //检测状态
+   if(CONNECTION_OK !=  PQstatus(pgConn))
+     THROW;
+   break;
+ case tuple :
+   if(PGRES_TUPLES_OK != PQresultStatus(pgRes))
+     THROW;
+   break;
 
-  case task:
-    if(PGRES_COMMAND_OK != PQresultStatus(pgRes))
-      THROW;
-    break;
-  default : break;
-  }//switch
+ case task:
+   if(PGRES_COMMAND_OK != PQresultStatus(pgRes))
+     THROW;
+   break;
+ default : break;
+ }//switch
 #undef THROW
 }
 
@@ -76,7 +76,6 @@ void exData::getInfo(const char * condiction)
     image[i] = imageTmp;
   }//for
 }//getInfo()
-
 
 //读取数据库中的所有SIFT特征
 //返回读取的个数
@@ -127,157 +126,6 @@ long exData::readSIFTFromDB()
   }//for
   return res;
 }//readSIFT
-
-//读取簇的中心点
-//@k 为簇的个数
-void exData::readCenter( int k)
-{
-  int nrow; //结果的行数和列数
-  int i,j; //循环变量
-  int d; //中心点的维度
-  int dindex,cindex; //检索结果对应的列号
-  std::stringstream sst; //用于提取字符串
-  std::string  s;
-  std::vector<float> tmp; //储存特征
-  float t; //临时变量
-
-  connectDB(CONNECT_INFO); //连接数据库
-  //    std::cerr <<"connect ok\n";
-  sst.str("");
-  sst.clear();
-  sst << "select d,center from " <<  "SIFTClusterCenter where k="
-      << k << ";";
-  pgRes = PQexec(pgConn,sst.str().c_str());
-  //is command exec ok
-  statusOK("error:exec select from SIFTClusterCenter",tuple);
-  //    std::cerr<<"exec select ok\n";
-  //检索结果
-  dindex = PQfnumber(pgRes,"d");
-  cindex = PQfnumber(pgRes,"center");
-  nrow = PQntuples(pgRes); //
-  if(nrow == 0)
-    throw std::invalid_argument("error: no cluster center read");
-  //中心维度第一个元素为准
-  d = atoi(PQgetvalue(pgRes,0,dindex));
-  clusterCenter.clear(); //清空原有数据
-   
-  for(i = 0; i < nrow;++i) //检索每个结果
-  {
-    s = PQgetvalue(pgRes,i,cindex);
-    clearS(s); //清空一些特殊符号
-    sst.str("");
-    sst.clear();
-    sst << s;
-    tmp.clear();
-    j = 0; //计数
-    while(sst >> t) //每个元素
-      ++j,tmp.push_back(t);
-    if(j != d) //读取个数不一样
-      throw std::invalid_argument("error:cluster center demension");
-    clusterCenter.push_back(tmp);
-  }//for
-}
-
-
-//读取视觉词汇频率直方图
-//默认的@k 为128维
-void exData::readWord(int wdDem)
-{
-  int nrow; //结果的行数
-  int i; //循环变量
-  int id; //imageID
-  int idindex,vindex; //检索结果对应的列号
-  std::stringstream sst; //用于提取字符串
-  std::string  s;
-  std::vector<float> tmp; //储存视觉词汇频率
-  float d;
-
-  connectDB(CONNECT_INFO); //连接数据库
-  //查询词汇,默认k=128
-  sst.str("");
-  sst.clear();
-  sst << "select imageID,visualWord from " << "imageVisualWord "
-      <<"where k=" << wdDem << ";";
-  pgRes = PQexec(pgConn,sst.str().c_str());
-   
-  //is command exec ok
-  statusOK("error:exec select from imageVisualWord",tuple);
-  //检索结果
-  idindex = PQfnumber(pgRes,"imageID");
-  vindex = PQfnumber(pgRes,"visualWord");
-  nrow = PQntuples(pgRes);  //行数
-  if(nrow != image.size()) //数据表为空或数据表有错误
-    throw std::length_error("error:table imageVisualWord empty\n");
-  for(i = 0; i < nrow; ++i)
-  {
-    //转换id为整数
-    id = atoi(PQgetvalue(pgRes,i,idindex));
-    s = PQgetvalue(pgRes,i,vindex);
-    clearS(s); //清空一些特殊符号
-    sst.str("");
-    sst.clear();
-    sst << s;
-    tmp.clear();
-    while(sst >> d)
-      tmp.push_back(d);
-    //存入新值
-    image[idToSub[id]].word = tmp;
-  }
-} //readWord
-
-
-//读取HS颜色直方图
-//@hb,@sb 为直方图的对应的bins
-void exData::readHS(int hb, int sb)
-{
-  int nrow; //结果的行数
-  int i,j; //循环变量
-  int id; //imageID
-  int idindex,hsindex; //检索结果对应的列号
-  std::stringstream sst; //用于提取字符串
-  std::string  s;
-  std::vector<float> tmp; //储存视觉词汇频率
-  float d;
-
-  connectDB(CONNECT_INFO); //连接数据库
-  //查询颜色直方图
-  sst.str("");
-  sst.clear();
-  sst << "select imageID,hs from hsHist "
-      << " where hbin=" <<hb << "AND sbin=" <<sb <<";";
-  pgRes = PQexec(pgConn,sst.str().c_str());
-  //is command exec ok
-  statusOK("error:exec select from hsHist", tuple);
-        
-  //检索结果
-  idindex = PQfnumber(pgRes,"imageID");
-  hsindex= PQfnumber(pgRes,"hs");
-  nrow = PQntuples(pgRes);  //行数
-  if(nrow != image.size()) //检查图像数与结果数是否相等
-    throw std::invalid_argument("error:image number doesn't match hs number");
-  for(i = 0; i < nrow; ++i)
-  {
-    //转换id为整数
-    id = atoi(PQgetvalue(pgRes,i,idindex));
-    s = PQgetvalue(pgRes,i,hsindex);
-    clearS(s); //清除字符 , {  }
-    sst.str("");
-    sst.clear();
-    sst << s;
-    //清空原有数据
-    image[idToSub[id]].hs.clear();
-    j = 0; //计数
-    while(sst >> d){//存入新值
-      image[idToSub[id]].hs.push_back(d);
-      ++j;
-    }
-    //检验数据完整
-    if(j != hb*sb)
-      throw std::invalid_argument("error: data from database doesn't match the argument");
-  }
-  hbin = hb;
-  sbin = sb;
-}//readHS
 
 //重写SIFT表
 //数据由exData::image提供
@@ -336,6 +184,59 @@ void exData::writeSIFT()
 
 }//writeSIFT
 
+//读取HS颜色直方图
+//@hb,@sb 为直方图的对应的bins
+void exData::readHS(int hb, int sb)
+{
+  int nrow; //结果的行数
+  int i,j; //循环变量
+  int id; //imageID
+  int idindex,hsindex; //检索结果对应的列号
+  std::stringstream sst; //用于提取字符串
+  std::string  s;
+  std::vector<float> tmp; //储存视觉词汇频率
+  float d;
+
+  connectDB(CONNECT_INFO); //连接数据库
+  //查询颜色直方图
+  sst.str("");
+  sst.clear();
+  sst << "select imageID,hs from hsHist "
+      << " where hbin=" <<hb << "AND sbin=" <<sb <<";";
+  pgRes = PQexec(pgConn,sst.str().c_str());
+  //is command exec ok
+  statusOK("error:exec select from hsHist", tuple);
+        
+  //检索结果
+  idindex = PQfnumber(pgRes,"imageID");
+  hsindex= PQfnumber(pgRes,"hs");
+  nrow = PQntuples(pgRes);  //行数
+  if(nrow != image.size()) //检查图像数与结果数是否相等
+    throw std::invalid_argument("error:image number doesn't match hs number");
+  for(i = 0; i < nrow; ++i)
+  {
+    //转换id为整数
+    id = atoi(PQgetvalue(pgRes,i,idindex));
+    s = PQgetvalue(pgRes,i,hsindex);
+    clearS(s); //清除字符 , {  }
+    sst.str("");
+    sst.clear();
+    sst << s;
+    //清空原有数据
+    image[idToSub[id]].hs.clear();
+    j = 0; //计数
+    while(sst >> d){//存入新值
+      image[idToSub[id]].hs.push_back(d);
+      ++j;
+    }
+    //检验数据完整
+    if(j != hb*sb)
+      throw std::invalid_argument("error: data from database doesn't match the argument");
+  }
+  hbin = hb;
+  sbin = sb;
+}//readHS
+
 //重写HS表
 //数据由exData::image提供
 //数组exData::image 的索引与数据库中的imageID一一对应(-1)
@@ -385,54 +286,57 @@ void exData::writeHS()
 
 }//writeHS
 
-//重写视觉词汇表
-//数据在数组exData::image中
-void exData::writeWord()
+
+//读取簇的中心点
+//@k 为簇的个数
+void exData::readCenter( int k)
 {
-  if(image.empty())//无数据
-    return ;
-  
+  int nrow; //结果的行数和列数
   int i,j; //循环变量
-  int n = image.size(); //图像数目
-  int k; //词汇的维度
-  std::string sql; //待执行的SQL语句
-  std::stringstream sst;
-  std::string s;
+  int d; //中心点的维度
+  int dindex,cindex; //检索结果对应的列号
+  std::stringstream sst; //用于提取字符串
+  std::string  s;
+  std::vector<float> tmp; //储存特征
+  float t; //临时变量
+  char *cons = PQescapeLiteral(pgConn,condition.c_str(),condition.length());
+  
+  connectDB(CONNECT_INFO); //连接数据库
+  //    std::cerr <<"connect ok\n";
+  sst.str("");
+  sst.clear();
+  sst << "select d,center from " <<  "SIFTClusterCenter where k="
+      << k << " AND condition=" << cons<<";";
+  pgRes = PQexec(pgConn,sst.str().c_str());
+  //is command exec ok
+  statusOK("error:exec select from SIFTClusterCenter",tuple);
+  //    std::cerr<<"exec select ok\n";
+  //检索结果
+  dindex = PQfnumber(pgRes,"d");
+  cindex = PQfnumber(pgRes,"center");
+  nrow = PQntuples(pgRes); //
+  if(nrow == 0)
+    throw std::invalid_argument("error: no cluster center read");
+  //中心维度第一个元素为准
+  d = atoi(PQgetvalue(pgRes,0,dindex));
+  clusterCenter.clear(); //清空原有数据
+   
+  for(i = 0; i < nrow;++i) //检索每个结果
   {
-    connectDB(CONNECT_INFO);
-    k = image[0].word.size(); //以第一个大小初始化
-    //keep atom
-    pgRes = PQexec(pgConn,"BEGIN");
-    statusOK("error:exec BEGIN",task);
-    //先删除已经存在的
+    s = PQgetvalue(pgRes,i,cindex);
+    clearS(s); //清空一些特殊符号
     sst.str("");
     sst.clear();
-    sst << "delete from imageVisualWord where k=" << k <<";";
-    pgRes = PQexec(pgConn,sst.str().c_str());
-    statusOK("error:exec delete from imageVisualWord", task);
-    for(i = 0; i < n; ++i) //遍历插入
-    {
-      if( k != image[i].word.size()) //数据有错误
-        throw std::invalid_argument("error: data size");
-      sst.str("");
-      sst.clear();
-      sst << "insert into imageVisualWord(imageID,k,visualWord) values "
-          <<"(" << subToID[i] << "," << k << ","
-          <<"\'{";
-      //word
-      for(j = 0; j < image[i].word.size() - 1; ++j) //important -1
-        sst << image[i].word[j] << ",";
-      sst<< image[i].word[j] << "}\'";
-      sst << ");"; //do not forget this
-      //exec command
-      pgRes = PQexec(pgConn,sst.str().c_str());
-      statusOK("error:insert into imageVisualWord", task);
-    }
-    pgRes = PQexec(pgConn, "END");
-    statusOK("error:END", task);
-  }
-}//writeWord
-
+    sst << s;
+    tmp.clear();
+    j = 0; //计数
+    while(sst >> t) //每个元素
+      ++j,tmp.push_back(t);
+    if(j != d) //读取个数不一样
+      throw std::invalid_argument("error:cluster center demension");
+    clusterCenter.push_back(tmp);
+  }//for
+}
 
 //重写聚类簇中心表
 //数据由exData::clusterCenter 提供
@@ -448,39 +352,147 @@ void exData::writeCenter()
   std::stringstream sst;
   std::string s;
   char *cons = PQescapeLiteral(pgConn,condition.c_str(),condition.length());
-  {
-    connectDB(CONNECT_INFO);
-    //keep atom
-    pgRes = PQexec(pgConn,"BEGIN");
-    statusOK("error:exec BEGIN",task);
-    //先删除
+  connectDB(CONNECT_INFO);
+  //keep atom
+  pgRes = PQexec(pgConn,"BEGIN");
+  statusOK("error:exec BEGIN",task);
+  //先删除
+  sst.str("");
+  sst.clear();
+  sst << "delete from SIFTClusterCenter where k=" << k
+      <<" AND d="<<d <<" AND condition="   <<cons <<";" ;
+  pgRes = PQexec(pgConn, sst.str().c_str());  
+  statusOK("error:exec delete from SIFTClusterCenter", task);    
+  for(i = 0; i < k; ++i){ //每个特征
+    //insert
     sst.str("");
     sst.clear();
-    sst << "delete from SIFTClusterCenter where k=" << k
-        <<" AND d="<<d <<" AND condition="   <<cons <<";" ;
-    pgRes = PQexec(pgConn, sst.str().c_str());  
-    statusOK("error:exec delete from SIFTClusterCenter", task);    
-    for(i = 0; i < k; ++i){ //每个特征
-      //insert
-      sst.str("");
-      sst.clear();
-      sst << "insert into SIFTClusterCenter(k,d,condition,center) values "
-          <<"(" << k << "," << d << "," << cons <<",";
-      //start with '{
-      sst << "'{";
-      for(j = 0; j < d - 1; ++j) //leave last element
-        sst << clusterCenter[i][j] << "," ; //seperated by comma
-      //end with }'
-      sst << clusterCenter[i][j] << "}');" ;
-      //exec command
-      pgRes = PQexec(pgConn,sst.str().c_str());
-      statusOK("error:insert into SIFTClusterCenter", task);
+    sst << "insert into SIFTClusterCenter(k,d,condition,reverseImageID,reverseImageTF,center) values "
+        <<"(" << k << "," << d << "," << cons <<",";
+    //反向索引信息
+    sst << "\'{";
+    std::map<long,float>::iterator mit = reverseIndex[i].begin();
+    for(; mit != reverseIndex[i].end() ; ++mit){ //imageID
+      sst << mit->first;
+      if(++mit != reverseIndex[i].end()) --mit,sst << ",";
     }
+    sst << "}\',\'{";
+    mit = reverseIndex[i].begin();
+    for(; mit != reverseIndex[i].end() ; ++mit){ //imageTF
+      sst << mit->second;
+      if(++mit  != reverseIndex[i].end()) --mit,sst << ",";
+    }//for
+    sst << "}\',"; //end this
+    
+    //center
+    sst << "\'{"; //start with '{
+    for(j = 0; j < d - 1; ++j) //leave last element
+      sst << clusterCenter[i][j] << "," ; //seperated by comma
+    //end with }'
+    sst << clusterCenter[i][j] << "}\');" ;
+    //exec command
+    pgRes = PQexec(pgConn,sst.str().c_str());
+    statusOK("error:insert into SIFTClusterCenter", task);
+  }
 
-    pgRes = PQexec(pgConn, "END");
-    statusOK("error:END", task);
-  }  
+  pgRes = PQexec(pgConn, "END");
+  statusOK("error:END", task);
 }//writeCenter
+
+//读取视觉词汇频率直方图
+//默认的@k 为128维
+void exData::readWord(int wdDem)
+{
+  int nrow; //结果的行数
+  int i; //循环变量
+  int id; //imageID
+  int idindex,vindex; //检索结果对应的列号
+  std::stringstream sst; //用于提取字符串
+  std::string  s;
+  std::vector<float> tmp; //储存视觉词汇频率
+  float d;
+  char *cons = PQescapeLiteral(pgConn,condition.c_str(),condition.length());
+  
+  connectDB(CONNECT_INFO); //连接数据库
+  //查询词汇,默认k=128
+  sst.str("");
+  sst.clear();
+  sst << "select imageID,visualWord from " << "imageVisualWord "
+      <<"where k=" << wdDem << " AND condition="<< cons<<";";
+  pgRes = PQexec(pgConn,sst.str().c_str());
+   
+  //is command exec ok
+  statusOK("error:exec select from imageVisualWord",tuple);
+  //检索结果
+  idindex = PQfnumber(pgRes,"imageID");
+  vindex = PQfnumber(pgRes,"visualWord");
+  nrow = PQntuples(pgRes);  //行数
+  if(nrow != image.size()) //数据表为空或数据表有错误
+    throw std::length_error("error:table imageVisualWord empty\n");
+  for(i = 0; i < nrow; ++i)
+  {
+    //转换id为整数
+    id = atoi(PQgetvalue(pgRes,i,idindex));
+    s = PQgetvalue(pgRes,i,vindex);
+    clearS(s); //清空一些特殊符号
+    sst.str("");
+    sst.clear();
+    sst << s;
+    tmp.clear();
+    while(sst >> d)
+      tmp.push_back(d);
+    //存入新值
+    image[idToSub[id]].word = tmp;
+  }
+} //readWord
+
+//重写视觉词汇表
+//数据在数组exData::image中
+void exData::writeWord()
+{
+  if(image.empty())//无数据
+    return ;
+  
+  int i,j; //循环变量
+  int n = image.size(); //图像数目
+  int k; //词汇的维度
+  std::string sql; //待执行的SQL语句
+  std::stringstream sst;
+  std::string s;
+  char *cons = PQescapeLiteral(pgConn,condition.c_str(),condition.length());
+  connectDB(CONNECT_INFO);
+  k = image[0].word.size(); //以第一个大小初始化
+  //keep atom
+  pgRes = PQexec(pgConn,"BEGIN");
+  statusOK("error:exec BEGIN",task);
+  //先删除已经存在的
+  sst.str("");
+  sst.clear();
+  sst << "delete from imageVisualWord where k=" << k
+      <<" AND condition=" << cons <<";";
+  pgRes = PQexec(pgConn,sst.str().c_str());
+  statusOK("error:exec delete from imageVisualWord", task);
+  for(i = 0; i < n; ++i) //遍历插入
+  {
+    if( k != image[i].word.size()) //数据有错误
+      throw std::invalid_argument("error: data size");
+    sst.str("");
+    sst.clear();
+    sst << "insert into imageVisualWord(imageID,k,condition,visualWord) "
+        <<"values (" << subToID[i] << "," << k << "," << cons <<","
+        <<"\'{";
+    //word
+    for(j = 0; j < image[i].word.size() - 1; ++j) //important -1
+      sst << image[i].word[j] << ",";
+    sst<< image[i].word[j] << "}\'";
+    sst << ");"; //do not forget this
+    //exec command
+    pgRes = PQexec(pgConn,sst.str().c_str());
+    statusOK("error:insert into imageVisualWord", task);
+  }
+  pgRes = PQexec(pgConn, "END");
+  statusOK("error:END", task);
+}//writeWord
 
 //move to next digit
 bool nextDigit(std::stringstream &ist){

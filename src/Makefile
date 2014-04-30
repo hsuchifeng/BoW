@@ -12,8 +12,6 @@ first:
 all:
 	echo "building all"
 	$(BIN)
-test:
-	$(COMMAND)
 calcSift:
 	$(COMMAND)
 featsKmeans:

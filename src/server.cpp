@@ -35,6 +35,7 @@ extern "C"{
 #endif
 
 #define TMP_FILE "userData/cache/server_XXXXXXXXXX" //for mkstemp()
+const int defaultPort = 9991; //默认监听端口
 //deal request
 void dealRequest(int fd, exData &db);
 extern int errno;
@@ -42,25 +43,42 @@ extern int errno;
 using namespace std;
 int main(int argc, char** argv)
 {
-  exData db; //数据库数据
-  int    listenfd, cltfd;
-  struct sockaddr_in     servaddr;
-  int pid;  //进程pid
-  int port = 9991; //监听端口默认9991
-  int k;  //视觉词汇维度
-  int hbin = 30,sbin = 32; //HS直方图的h,s维度,默认为30,32
-  if(argc != 3 && argc != 2){
+
+  if(argc != 4 && argc != 3 && argc != 2){
     cerr <<"image retrieval server\n";
-    cerr <<"ussage:" << argv[0] << " <k> [port] \n";
-    cerr <<"k is the word's demension\n";
+    cerr <<"ussage:" << argv[0]
+         << " <configuration_file> [k] [port] \n";
     return 1;
   }
+  int port = defaultPort; //监听端口
+  int k=0;  //视觉词汇维度
+  int hbin = 30,sbin = 32; //HS直方图的h,s维度,默认为30,32
+  map<string,string> conf; //配置信息
+  readConf(conf,argv[1]); //读取配置信息
 
-  k = atoi(argv[1]);
-  if(argc == 3) //set port
-    port = atoi(argv[2]);
-  try
-  {
+  if(argc == 3 || argc == 4) {//set k and port
+    k = atoi(argv[3]);
+    if(argc == 4) //set port
+      port = atoi(argv[2]);
+  }
+  else { //read from configuration file
+    if(!hasValue(conf,"k")){
+      cerr<<"error:no k in configuration file\n";
+      return 1;
+    }
+    k = atoi(conf["k"].c_str());
+    if(!hasValue(conf,"port"))
+      cerr<<"info:using default port:"<<defaultPort <<"\n";
+    port = atoi(conf["port"].c_str());
+  } //port and k
+  if(!hasValue(conf,"image"))
+    cerr<<"info:using all image in database\n";
+    
+  try{
+    exData db(conf["image"].c_str()); //数据库数据
+    int    listenfd, cltfd;
+    struct sockaddr_in     servaddr;
+    int pid;  //进程pid
     //initialize
     db.readCenter(); //get cluster center
     cerr<<"info:read center ok\n";
@@ -172,7 +190,7 @@ dealRequest(int fd, exData &db){
     cerr<<"info:word match result\n";
     DEBUG_OUTPUT
 #endif
-  }else     //filter
+      }else     //filter
     for(i =0 ; i < rq.id_size(); ++i)
       result.push_back(rq.id(i));
   originID = result; //save originID

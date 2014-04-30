@@ -58,6 +58,7 @@ main(int argc, char **argv){
     float precision = atof(conf["precision"].c_str()); //精度
     int maxCount = atoi(conf["maxCount"].c_str()); //最大迭代次数
     int i,j,n; //循环变量
+    int nimg = db.image.size(); //图像数目
     int row,col; //所有特征的行和列
     int crow; ///当前行
     float *f;    //临时变量
@@ -74,7 +75,7 @@ main(int argc, char **argv){
     //初始化用于聚类的矩阵mfeats
     mfeats = cv::Mat(row,col,cv::DataType<float>::type); 
     //将特征类型vector<vector<float> > 转换为 cv::Mat
-    for(crow = i = 0; i < db.image.size();++i) {//每张图片
+    for(crow = i = 0; i < nimg;++i) {//每张图片
       for(j = 0; j < db.image[i].SIFTFeat.size(); ++j, ++crow){//每个特征
         if(db.image[i].SIFTFeat[j].empty()) //no features element
           throw invalid_argument("error:no features");
@@ -87,8 +88,11 @@ main(int argc, char **argv){
     //cluster
     std::cerr << "using opencv kmeans\n";
     //attemps = 1,尝试一次
+    std::cerr << "clustering\b";
     cv::kmeans(mfeats,k, mlabel,tmcri,1,cv::KMEANS_PP_CENTERS,mcenter);
+    
     //将中心点cv::Mat类型装换为 vector<vector<double> >
+    cerr<<"converting Mat\n";
     db.clusterCenter.clear();
     for(i = 0; i < mcenter.rows; ++i){ // 每行
       vecf.clear();
@@ -97,7 +101,21 @@ main(int argc, char **argv){
         vecf.push_back(f[j]);
       db.clusterCenter.push_back(vecf);
     }//for
-
+    
+    //建立反向索引信息
+    cerr<<"building reverse index information\n";
+    db.reverseIndex.clear();
+    db.reverseIndex.resize(k);
+    for(crow = i = 0; i < nimg; ++i) //处理每张图像,"单词计数"
+      for(j = 0; j < db.image[i].SIFTFeat.size(); ++j, ++crow)
+        db.reverseIndex[mlabel.at<int>(crow)][db.subToID[i]] +=1;
+    //转化为词汇频率，归一化
+    for(i = 0; i < k; ++i){
+      map<long,float>::iterator mit=db.reverseIndex[i].begin();
+      for(; mit != db.reverseIndex[i].end(); ++mit)
+        mit->second /= db.image[i].SIFTFeat.size(); //除以图像特征数目
+    }//for
+    
     //store to database
     cerr << "writing to database\n";
     db.writeCenter();

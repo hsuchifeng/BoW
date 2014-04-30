@@ -14,26 +14,35 @@ using namespace std;
 int
 main(int argc, char **argv)
 {
-  if(argc != 2)
-  {
+  if(argc != 3){
     cerr <<"generate visual word histogram for every image in database\n";
-    cerr <<"ussage:" << argv[0] << " <k> \n";
+    cerr <<"ussage:" << argv[0] << " <configuration_file> <sift_file>\n";
     return 1;
   }
-  try
-  {
-    exData db; //数据类
-    int i; //循环变量
+  map<string,string> conf; //配置信息
+  readConf(conf,argv[1]); //读取配置信息
+  //check configuration
+  if(!hasValue(conf,"k")) {// no k
+    cerr <<"error:no k specific";
+    return 1;
+  }
+  if(!hasValue(conf,"image"))
+    cerr<<"using all image in database\n";
+    
+  try {
+    exData db(conf["image"].c_str()); //数据类
+    long i; //循环变量
     int k; //k in kmeans
     vector<float> idf; //not used
-    //读取簇中心
-    k = atoi(argv[1]);
-    db.readCenter(k);
+
+    k = atoi(conf["k"].c_str());
+    cerr<<"reading cluster center\n";
+    db.readCenter(k); //读取簇中心
     //读取每张图像的SIFT特征
-    db.readSIFT();
+    cerr<<"reading SIFT features\n";
+    db.readSIFT(argv[2]);
     //计算视觉词汇频率直方图
-    for(i = 0; i < db.image.size(); ++i)
-    {
+    for(i = 0; i < db.image.size(); ++i){
       cerr <<"dealing image " << i+1 <<  endl;
       //计算视觉词汇频率直方图,并归一化为TF
       if(calcCodewords(db.image[i].SIFTFeat,db.clusterCenter, //result
@@ -42,12 +51,10 @@ main(int argc, char **argv)
             return 1;
       }
     }//for
-
     //将结果存入数据库
     db.writeWord();
   }//try
-  catch (invalid_argument &e)
-  {
+  catch (exception &e){
     cerr <<"error:"<<e.what();
   }
   return 0;

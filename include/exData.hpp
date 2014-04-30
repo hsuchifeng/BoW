@@ -2,7 +2,7 @@
 最近修改20140427
 
 + 类exData包含公有的成员
-1. vector<ImageInfo> image  ,储存图像信息,image[0,n-1],与数据库中的imageID[1,n]一一对应
+1. vector<ImageInfo> image  ,储存图像信息,image[0,n-1],与数据库中的imageID[1,n]一一对应,通过公有成员idToSub,subToID访问!
 2. Matrix clusterCenter     ,聚类后的簇中心点
 3. hbin, sbin               ,HS直方图的划分块数
 
@@ -100,8 +100,8 @@ private:
   }//clear
   };//ImageInfo
 public:
-  Matrix  clusterCenter; //每个簇对应的簇中心
-  //图像数据image[0,n-1]与数据库中的imageID[1,n]一一对应
+  Matrix  clusterCenter; //每个簇对应的簇中心,k行
+  std::vector<std::map<long,float> >  reverseIndex; //反向索引信息,k行
   std::vector<ImageInfo> image;
   int hbin, sbin; //HS直方图块数
 

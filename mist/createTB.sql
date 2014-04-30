@@ -27,8 +27,10 @@ clusterID serial PRIMARY KEY, --簇ID,
 d integer NOT NULL CHECK (d>0), --簇的维度(特征维度)
 k integer NOT NULL CHECK (k>0), --聚类的k（簇的个数)
 condition text NOT NULL , --聚类的图片集,SQL语句中的where 子句
-center double precision[] NOT NULL --簇中心点
---featureID integer [] NOT  NULL --属于这个簇的featureID 
+center double precision[] NOT NULL ,--簇中心点
+--反向索引信息
+reverseImageID integer NOT NULL , --属于该簇的image
+reverseImageTF double precision NOT NULL  --上述image位于该簇对应的TF值
 );
 
 
@@ -38,7 +40,6 @@ wordID serial PRIMARY KEY, --wordID
 imageID integer NOT NULL REFERENCES imageInfo(imageID), --引用图像ID
 k integer NOT NULL check (k>0), --词汇维度
 condition text NOT NULL , --同SIFTClusterCenter
-clusterID integer[] NOT  NULL , --该词汇引用的簇 ID,用于建立反向索引
 visualWord double precision[] NOT NULL --视觉词汇,k个元素
 );
 

@@ -25,8 +25,7 @@ extern "C"{
 #include "ColorHist.h"
 #include "matchBaseColor.h"
 
-#define MAXSOCKET 10240
-#define MAXPATH 1024
+
 #define DEBUG 1
 #if DEBUG
 #define DEBUG_OUTPUT   {                                            \
@@ -34,10 +33,10 @@ extern "C"{
       cerr << i+1 <<"\t" << db.image[result[i]].imagePath << endl;}
 #endif
 
+void dealRequest(int fd, exData &db); //deal request
 #define TMP_FILE "userData/cache/server_XXXXXXXXXX" //for mkstemp()
-const int defaultPort = 9991; //默认监听端口
-//deal request
-void dealRequest(int fd, exData &db);
+const int MAXSOCKETBUF= 10240;  //socket最大缓冲长度
+const int DEFAULTPORT = 9991; //默认监听端口
 extern int errno;
 
 using namespace std;
@@ -50,7 +49,7 @@ int main(int argc, char** argv)
          << " <configuration_file> [k] [port] \n";
     return 1;
   }
-  int port = defaultPort; //监听端口
+  int port = DEFAULTPORT; //监听端口
   int k=0;  //视觉词汇维度
   int hbin = 30,sbin = 32; //HS直方图的h,s维度,默认为30,32
   map<string,string> conf; //配置信息
@@ -68,7 +67,7 @@ int main(int argc, char** argv)
     }
     k = atoi(conf["k"].c_str());
     if(!hasValue(conf,"port"))
-      cerr<<"info:using default port:"<<defaultPort <<"\n";
+      cerr<<"info:using default port:"<<DEFAULTPORT <<"\n";
     port = atoi(conf["port"].c_str());
   } //port and k
   if(!hasValue(conf,"image"))
@@ -145,7 +144,7 @@ int main(int argc, char** argv)
 void
 dealRequest(int fd, exData &db){
   using namespace dmir; //protobuf
-  char buf[MAXSOCKET];
+  char buf[MAXSOCKETBUF];
   char imgPath[]=TMP_FILE; 
   vector<vector<float> > userFeats;  //用户图像特征
   size_t n;
@@ -157,7 +156,7 @@ dealRequest(int fd, exData &db){
   string s; //temp string
   
   //read request
-  n  = read(fd, buf, MAXSOCKET);
+  n  = read(fd, buf, MAXSOCKETBUF);
   if(n == 0){//no data
     cerr << "warn:recieve 0 byte data from client:"
          << strerror(errno) << endl;

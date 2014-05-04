@@ -29,8 +29,8 @@ k integer NOT NULL CHECK (k>0), --聚类的k（簇的个数)
 condition text NOT NULL , --聚类的图片集,SQL语句中的where 子句
 center double precision[] NOT NULL ,--簇中心点
 --反向索引信息
-reverseImageID integer NOT NULL , --属于该簇的image
-reverseImageTF double precision NOT NULL  --上述image位于该簇对应的TF值
+reverseImageID integer[] NOT NULL , --属于该簇的image
+reverseImageTF double precision[] NOT NULL  --上述image位于该簇对应的TF值
 );
 
 

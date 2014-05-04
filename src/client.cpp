@@ -18,16 +18,16 @@ extern "C"{
 #include "imgret.pb.h" //protobug
 
 #define DEFAULTSERVER "10.21.23.104"
-#define MAXLINE 9600
-#define DEFPORT 9990
+const int MAXSOCKETBUF= 9600;
+const int DEFAULTPORT= 9991;
 using namespace std;
 
 int main(int argc, char** argv)
 {
   int sockfd, n;
-  int iport = DEFPORT;
+  int iport = DEFAULTPORT;
   struct sockaddr_in servaddr;
-  char *imgPath, *serip = DEFAULTSERVER, buf[MAXLINE +1];
+  char *imgPath, *serip = DEFAULTSERVER, buf[MAXSOCKETBUF];
   string s;
   string img; //image file content
   dmir::Request rq; //proto request

@@ -454,7 +454,7 @@ void exData::readWord(int wdDem)
 
 //重写视觉词汇表
 //数据在数组exData::image中
-void exData::writeWord()
+void exData::writeWo
 {
   if(image.empty())//无数据
     return ;

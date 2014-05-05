@@ -77,14 +77,14 @@ int main(int argc, char** argv)
     exData db(conf["image"].c_str()); //数据库数据
     int    listenfd, cltfd;
     struct sockaddr_in     servaddr;
-    int pid;  //进程pid
+    int pid;  //进程id
     //initialize
-    db.readCenter(); //get cluster center
-    cerr<<"info:read center ok\n";
+    cerr<<"reading cluster center and reverse information\n";
+    db.readCenter(k); //get cluster center
+    cerr<<"reading imagevisual word\n";
     db.readWord(k); //get word for every image
-    cerr<<"info:read word ok\n";
-    db.readHS(hbin,sbin);
-    cerr<<"info:read hs histogram ok\n";
+    // cerr<<"reading hs histogram\n";
+    //db.readHS(hbin,sbin);
           
     //create master socket
     if( (listenfd = socket(AF_INET, SOCK_STREAM, 0)) == -1 ){

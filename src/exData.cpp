@@ -19,24 +19,24 @@ extern "C"
 void exData::statusOK(const char *mesg,CMDT ct )
 {
 #define    THROW throw std::invalid_argument(std::string(mesg) + std::string("\n") +PQerrorMessage(pgConn) )
-switch(ct)
- {
- case connection:
-   //检测状态
-   if(CONNECTION_OK !=  PQstatus(pgConn))
-     THROW;
-   break;
- case tuple :
-   if(PGRES_TUPLES_OK != PQresultStatus(pgRes))
-     THROW;
-   break;
+  switch(ct)
+  {
+  case connection:
+    //检测状态
+    if(CONNECTION_OK !=  PQstatus(pgConn))
+      THROW;
+    break;
+  case tuple :
+    if(PGRES_TUPLES_OK != PQresultStatus(pgRes))
+      THROW;
+    break;
 
- case task:
-   if(PGRES_COMMAND_OK != PQresultStatus(pgRes))
-     THROW;
-   break;
- default : break;
- }//switch
+  case task:
+    if(PGRES_COMMAND_OK != PQresultStatus(pgRes))
+      THROW;
+    break;
+  default : break;
+  }//switch
 #undef THROW
 }
 
@@ -197,13 +197,15 @@ void exData::readHS(int hb, int sb)
   std::string  s;
   std::vector<float> tmp; //储存视觉词汇频率
   float d;
-
+  char *cons = PQescapeLiteral(pgConn,condition.c_str(),condition.length());
+  
   connectDB(CONNECT_INFO); //连接数据库
   //查询颜色直方图
   sst.str("");
   sst.clear();
   sst << "select imageID,hs from hsHist "
-      << " where hbin=" <<hb << "AND sbin=" <<sb <<";";
+      << " where hbin=" <<hb << "AND sbin=" <<sb
+      <<" AND condition=" << cons <<";";
   pgRes = PQexec(pgConn,sst.str().c_str());
   //is command exec ok
   statusOK("error:exec select from hsHist", tuple);
@@ -251,6 +253,7 @@ void exData::writeHS()
   std::string sql; //待执行的SQL语句
   std::stringstream sst;
   std::string s; 
+  char *cons = PQescapeLiteral(pgConn,condition.c_str(),condition.length());
   
   connectDB(CONNECT_INFO);
   //keep atom
@@ -260,15 +263,17 @@ void exData::writeHS()
   sst.str("");
   sst.clear();
   sst << "delete from hsHist where "
-      <<"hbin=" << hbin << " AND sbin=" << sbin << ";";
+      <<"hbin=" << hbin << " AND sbin=" << sbin
+      << " AND condition=" << cons <<";";
   pgRes = PQexec(pgConn,sst.str().c_str());
   statusOK("error:exec delete from hsHist", task);
   for(i = 0; i < n; ++i) //遍历插入
   {
     sst.str("");
     sst.clear();
-    sst << "insert into hsHist(imageID,hbin,sbin,hs) values "
-        << "(" << subToID[i] << "," << hbin << "," << sbin << ",";
+    sst << "insert into hsHist(imageID,hbin,sbin,condition,hs) values "
+        << "(" << subToID[i] << "," << hbin << "," << sbin
+        << "," << cons <<  ",";
     //start with '{
     sst <<"\'{";
     //hue and saturation
@@ -288,26 +293,29 @@ void exData::writeHS()
 }//writeHS
 
 
-//读取簇的中心点
+//读取簇的中心点,以及反向索引信息
 //@k 为簇的个数
 void exData::readCenter( int k)
 {
   int nrow; //结果的行数和列数
   int i,j; //循环变量
   int d; //中心点的维度
-  int dindex,cindex; //检索结果对应的列号
-  std::stringstream sst; //用于提取字符串
-  std::string  s;
+  int dindex,cindex,idindex,tfindex; //检索结果对应的列号
+  std::stringstream sst,idsst,tfsst; //用于提取字符串
+  std::string  s,ids,tfs; 
   std::vector<float> tmp; //储存特征
   float t; //临时变量
+  long id; //图像id
+  std::map<long,float> rev; //单个反向索引信息
   char *cons = PQescapeLiteral(pgConn,condition.c_str(),condition.length());
   
   connectDB(CONNECT_INFO); //连接数据库
   //    std::cerr <<"connect ok\n";
   sst.str("");
   sst.clear();
-  sst << "select d,center from " <<  "SIFTClusterCenter where k="
-      << k << " AND condition=" << cons<<";";
+  sst << "select d,center,reverseImageID,reverseImageTF from "
+      <<  "SIFTClusterCenter where k=" << k
+      << " AND condition=" << cons<<" ;";
   pgRes = PQexec(pgConn,sst.str().c_str());
   //is command exec ok
   statusOK("error:exec select from SIFTClusterCenter",tuple);
@@ -315,15 +323,18 @@ void exData::readCenter( int k)
   //检索结果
   dindex = PQfnumber(pgRes,"d");
   cindex = PQfnumber(pgRes,"center");
+  tfindex =PQfnumber(pgRes,"reverseImageTF");
+  idindex =PQfnumber(pgRes,"reverseImageID");
   nrow = PQntuples(pgRes); //
   if(nrow == 0)
-    throw std::invalid_argument("error: no cluster center read");
+    throw std::invalid_argument("no cluster center read in database");
   //中心维度第一个元素为准
   d = atoi(PQgetvalue(pgRes,0,dindex));
-  clusterCenter.clear(); //清空原有数据
-   
-  for(i = 0; i < nrow;++i) //检索每个结果
-  {
+  //清空原有数据
+  clusterCenter.clear();
+  reverseIndex.clear(); 
+  for(i = 0; i < nrow;++i) {//检索每个结果
+    //center
     s = PQgetvalue(pgRes,i,cindex);
     clearS(s); //清空一些特殊符号
     sst.str("");
@@ -334,8 +345,24 @@ void exData::readCenter( int k)
     while(sst >> t) //每个元素
       ++j,tmp.push_back(t);
     if(j != d) //读取个数不一样
-      throw std::invalid_argument("error:cluster center demension");
+      throw std::invalid_argument("cluster center demension");
     clusterCenter.push_back(tmp);
+    //reverse info
+    tfs = PQgetvalue(pgRes,i,tfindex);
+    ids = PQgetvalue(pgRes,i,idindex);
+    clearS(tfs);
+    clearS(ids);
+    tfsst.clear();
+    tfsst.str("");
+    tfsst << tfs;
+    idsst.clear();
+    idsst.str("");
+    idsst << ids;
+    rev.clear();
+    while(idsst >> id) 
+      tfsst >> rev[id];
+    std::cerr<<rev.size() << " image(s) in cluster " << i+1 << "\n";
+    reverseIndex.push_back(rev);
   }//for
 }
 

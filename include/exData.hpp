@@ -2,7 +2,7 @@
 最近修改20140427
 
 + 类exData包含公有的成员
-1. vector<ImageInfo> image  ,储存图像信息,image[0,n-1],与数据库中的imageID[1,n]一一对应,通过公有成员idToSub,subToID访问!
+1. vector<ImageInfo> image  ,储存图像信息,image[0,n-1],与数据库中的imageID[1,n]                             一一对应,通过公有成员idToSub,subToID访问!
 2. Matrix clusterCenter     ,聚类后的簇中心点
 3. hbin, sbin               ,HS直方图的划分块数
 
@@ -70,26 +70,18 @@ extern "C"
 //初始化图像信息语句
 #define SQL_IMAGE_INFO "select imagePath,imageName,imageID from imageInfo "
 
+typedef   std::vector<std::vector<float> >  Matrix;  //二维数组
+struct ImageInfo  //单张图像的信息
+{
+  std::string imagePath; //图像路径
+  std::string imageName; //原始图像文件名
+  std::vector<float>  word; //图像的视觉词汇频率直方图
+  std::vector<float>  hs; //HS直方图中,hbin=hs.size(), sbin=hs[0].size()
+  Matrix  SIFTFeat; //图像SIFT特征
+  std::vector<float> SIFTx,SIFTy; //SIFT特征对应的坐标
 
-
-class  exData { //数据库信息类
-private:
-
-  enum CMDT {connection,tuple,task};   //数据库SQL语句类型
-  typedef   std::vector<std::vector<float> >  Matrix;  //二维数组
-  std::string condition; //图片集
-  struct ImageInfo  //单张图像的信息
+  void clear()//清空数据
   {
-    std::string imagePath; //图像路径
-    std::string imageName; //原始图像文件名
-    std::vector<float>  word; //图像的视觉词汇频率直方图
-    std::vector<float>  hs; //HS直方图中,hbin=hs.size(), sbin=hs[0].size()
-    Matrix  SIFTFeat; //图像SIFT特征
-    std::vector<float> SIFTx; //SIFT特征对应的坐标
-    std::vector<float> SIFTy;
-
-    void clear()//清空数据
-    {
     imagePath.clear();
     imageName.clear();
     SIFTFeat.clear();
@@ -98,16 +90,24 @@ private:
     word.clear();
     hs.clear();
   }//clear
-  };//ImageInfo
+};//ImageInfo
+
+class  exData { //数据库信息类
+private:
+  PGconn *pgConn;   //数据库连接
+  PGresult *pgRes;  //数据库查询结果
+  enum CMDT {connection,tuple,task};   //数据库SQL语句类型
+  std::string condition; //初始化类所用的图像集
+
 public:
   Matrix  clusterCenter; //每个簇对应的簇中心,k行
   std::vector<std::map<long,float> >  reverseIndex; //反向索引信息,k行
   std::vector<ImageInfo> image;
   int hbin, sbin; //HS直方图块数
-
   std::map<long,long> idToSub; //映射 数据库中的imageID 到 exData中数据的数组下标
   std::map<long,long> subToID; //与idToSub相反
   
+public:  
   //默认构造函数，从数据库中加载所有图像的路径及文件名(不含扩展名)
   //s 选择图像数据的where语句
   exData(const char *s =NULL):condition(s),hbin(0),sbin(0)
@@ -176,9 +176,7 @@ public:
   void writeCenter();
   
 private:
-  PGconn *pgConn;   //数据库连接
-  PGresult *pgRes;  //数据库查询结果
-   //建立与数据库的连接 
+  //建立与数据库的连接 
   void connectDB(const char *connInfo)
   {
     if(!pgConn) //未建立连接

@@ -39,6 +39,10 @@ const int MAXSOCKETBUF= 10240;  //socket最大缓冲长度
 const int DEFAULTPORT = 9991; //默认监听端口
 extern int errno;
 
+int nresult; //视觉词袋筛选后最多结果数
+float resultSimilarity; //视觉词汇筛选的最小相似度
+int hbin = 30,sbin = 32; //HS直方图的h,s维度,默认为30,32
+
 using namespace std;
 int main(int argc, char** argv)
 {
@@ -51,27 +55,38 @@ int main(int argc, char** argv)
   }
   int port = DEFAULTPORT; //监听端口
   int k=0;  //视觉词汇维度
-  int hbin = 30,sbin = 32; //HS直方图的h,s维度,默认为30,32
+
   map<string,string> conf; //配置信息
   readConf(conf,argv[1]); //读取配置信息
-
-  if(argc == 3 || argc == 4) {//set k and port
-    k = atoi(argv[3]);
-    if(argc == 4) //set port
-      port = atoi(argv[2]);
+  //read from configuration file
+  if(!hasValue(conf,"nresult")){
+    cerr<<"error: no result number specific\n";
+    return 1;
   }
-  else { //read from configuration file
-    if(!hasValue(conf,"k")){
-      cerr<<"error:no k in configuration file\n";
-      return 1;
-    }
-    k = atoi(conf["k"].c_str());
-    if(!hasValue(conf,"port"))
-      cerr<<"info:using default port:"<<DEFAULTPORT <<"\n";
+  nresult = atoi(conf["nresult"].c_str());
+  if(!hasValue(conf,"resultSimilarity")){
+    cerr<<"error: no result similarity specific\n";
+    return 1;
+  }
+  resultSimilarity = atof(conf["resultSimilarity"].c_str());
+  cerr<<"nresult=" <<nresult <<",resultSimilarity="<<resultSimilarity<<"\n";
+  if(!hasValue(conf,"k")){
+    cerr<<"error:no k in configuration file\n";
+    return 1;
+  }
+  k = atoi(conf["k"].c_str());
+  if(!hasValue(conf,"port"))
+    cerr<<"info:using default port:"<<DEFAULTPORT <<"\n";
+  else
     port = atoi(conf["port"].c_str());
-  } //port and k
   if(!hasValue(conf,"image"))
-    cerr<<"info:using all image in database\n";
+    cerr<<"using all image in database\n";
+  if(argc == 3 || argc == 4) {//set k and port 
+    k = atoi(argv[2]);
+    if(argc == 4) //set port
+      port = atoi(argv[3]);
+  }
+
     
   try{
     exData db(conf["image"].c_str()); //数据库数据
@@ -108,7 +123,7 @@ int main(int argc, char** argv)
       cerr<<"error:listen socket "<< strerror(errno) <<endl;
       return 1;
     }
-    cerr<<"info:listening\n";
+    cerr<<"listening port:"<< port<<"\n";
     while(1){
       //accept request
       //client's addr information is not used
@@ -183,8 +198,8 @@ dealRequest(int fd, exData &db){
     close(imgfd);
     cerr <<"info:user image path:" <<imgPath << endl;
     calcSiftFeats(imgPath, userFeats);
-    //match word histogram 相似度至少为0.1 最多500张
-    result = matchWord(userFeats,db,500,0.1);
+    //match word histogram 
+    result = matchWord(userFeats,db,nresult,resultSimilarity);
 #if DEBUG
     cerr<<"info:word match result\n";
     DEBUG_OUTPUT
@@ -195,7 +210,7 @@ dealRequest(int fd, exData &db){
   originID = result; //save originID
 
 
-#if 1 //hs match
+#if 0 //hs match
   matchBaseColor(imgPath, db,result);
 #if DEBUG
   cerr<<"info:hs histogram match result\n";
@@ -203,7 +218,7 @@ dealRequest(int fd, exData &db){
 #endif //debug
 #endif //hs match
 
-#if 1 //hs filter
+#if 0 //hs filter
     vector<CvScalar> acolor(0); //必须出现的颜色,RGB
   vector<CvScalar> dcolor(0); //不能出现的颜色, RGB
   CvScalar tmpcvs;

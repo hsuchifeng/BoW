@@ -61,9 +61,10 @@ int main(int argc, char** argv)
   }
 
   //connect server
+  cerr<<"connecting to server:" << serip <<":"<<iport<<"\n";
   if( connect(sockfd, (struct sockaddr*)&servaddr,
               sizeof(servaddr)) < 0){
-    cerr<<"connect error:"<< strerror(errno);
+    cerr<<"error:"<< strerror(errno) << "\n";
     exit(0);
   }
 

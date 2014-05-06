@@ -80,7 +80,7 @@ void exData::getInfo(const char * condiction)
 
 //读取数据库中的所有SIFT特征
 //返回读取的个数
-long exData::readSIFTFromDB()
+int exData::readSIFTFromDB()
 {
   int res = 0; //返回值
   int nrow; //结果的行数和列数
@@ -305,8 +305,8 @@ void exData::readCenter( int k)
   std::string  s,ids,tfs; 
   std::vector<float> tmp; //储存特征
   float t; //临时变量
-  long id; //图像id
-  std::map<long,float> rev; //单个反向索引信息
+  int id; //图像id
+  std::map<int,float> rev; //单个反向索引信息
   char *cons = PQescapeLiteral(pgConn,condition.c_str(),condition.length());
   
   connectDB(CONNECT_INFO); //连接数据库
@@ -400,7 +400,7 @@ void exData::writeCenter()
         <<"(" << k << "," << d << "," << cons <<",";
     //反向索引信息
     sst << "\'{";
-    std::map<long,float>::iterator mit = reverseIndex[i].begin();
+    std::map<int,float>::iterator mit = reverseIndex[i].begin();
     while( mit != reverseIndex[i].end()){ //imageID
       sst << mit->first;
       // std::cerr<<"\t" << mit->first ; 
@@ -544,11 +544,11 @@ bool nextDigit(std::stringstream &ist){
 //the file is CSV format with header "imageID,pos,feature"
 //SIFT features are read to exData::image[i].SIFTFeat
 //return the number of features read
-long exData::readSIFTFromFile(const char *csv){
-  long r=0; //return value
-  long i; //index
-  long n = image.size(); //image count
-  long imageID; //imageID in database
+int exData::readSIFTFromFile(const char *csv){
+  int r=0; //return value
+  int i; //index
+  int n = image.size(); //image count
+  int imageID; //imageID in database
   float f;
   std::ifstream ifs(csv);
   std::string s;

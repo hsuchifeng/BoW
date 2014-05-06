@@ -101,11 +101,11 @@ private:
 
 public:
   Matrix  clusterCenter; //每个簇对应的簇中心,k行
-  std::vector<std::map<long,float> >  reverseIndex; //反向索引信息,k行
+  std::vector<std::map<int,float> >  reverseIndex; //反向索引信息,k行
   std::vector<ImageInfo> image;
   int hbin, sbin; //HS直方图块数
-  std::map<long,long> idToSub; //映射 数据库中的imageID 到 exData中数据的数组下标
-  std::map<long,long> subToID; //与idToSub相反
+  std::map<int,int> idToSub; //映射 数据库中的imageID 到 exData中数据的数组下标
+  std::map<int,int> subToID; //与idToSub相反
   
 public:  
   //默认构造函数，从数据库中加载所有图像的路径及文件名(不含扩展名)
@@ -127,19 +127,19 @@ public:
   }
 
   //check wheter given is valid
-  bool validID(long id){
+  bool validID(int id){
     return idToSub.end() != idToSub.find(id);
   }
     
   //从CSV文件中读取SIFT特征
   //返回读取的个数
-  // long readSIFTFromFile(const char *s);
-  long readSIFTFromFile(const char *csv);
+  // int readSIFTFromFile(const char *s);
+  int readSIFTFromFile(const char *csv);
   
   //读取数据库中SIFT特征
   //返回读取的个数
-  long readSIFTFromDB();
-  long readSIFT(const char* s=NULL){
+  int readSIFTFromDB();
+  int readSIFT(const char* s=NULL){
     if(!s) return readSIFTFromDB();
     else return readSIFTFromFile(s);
   }

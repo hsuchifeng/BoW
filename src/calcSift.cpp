@@ -30,9 +30,9 @@ main(int argc, char **argv)
   try
   {
     exData  db(conf["image"].c_str());  //图像信息数据
-    long nimg;  //图像数目
-    long i,j,k; //循环变量
-    vector<long> failID; //计算SIFT失败的图像ID
+    int nimg;  //图像数目
+    int i,j,k; //循环变量
+    vector<int> failID; //计算SIFT失败的图像ID
     vector<vector<float> > SIFTFeat; //SIFT特征
     vector<float> x,y; //feature position
     nimg = db.image.size();

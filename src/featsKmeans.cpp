@@ -1,5 +1,6 @@
 /****************************************
-对SIFT特征进行聚类,并将结果写入数据库
+对SIFT特征进行聚类,并将结果写入数据库,
+结果包括簇中心，反向索引信息,视觉词汇频率直方图
 聚类参数从配置文件获取,包括图像集，k,精度，最大迭代次数
 ****************************************/
 
@@ -19,7 +20,7 @@ int
 main(int argc, char **argv){
   if(argc != 2 && argc != 3){
     cerr <<"features cluster using kmeans\n";
-    cerr <<"ussage:" << argv[0] << " <configure_file> [sift_csv_file]\n";
+    cerr <<"usage:" << argv[0] << " <configure_file> [sift_csv_file]\n";
     cerr <<"if no sift_csv_file specific,features in database will be used\n";
     return 1;
   }
@@ -33,23 +34,23 @@ main(int argc, char **argv){
     cerr<<"using all image in database\n";
   else
     cerr<<"using image set with :" <<conf["image"] << "\n";
+  
   if(conf["k"].empty()) {//k
     cerr<<"error: read k\n";
     return 1;
-  }
-  else
+  }else
     cerr<<"k="<<conf["k"] <<"\n";
+  
   if(conf["precision"].empty())  { //precision
     cerr<<"error: read precision\n";
     return 1;
-  }
-  else
+  }else
     cerr<<"precison=" << conf["precision"] <<"\n";
+  
   if(conf["maxCount"].empty()) {//max count in recursive
     cerr<<"error: read max count\n";
     return 1;
-  }
-  else
+  }else
     cerr<<"maxCount="<<conf["maxCount"] <<"\n";
   
   try{
@@ -106,23 +107,34 @@ main(int argc, char **argv){
     cerr<<"building reverse index information\n";
     db.reverseIndex.clear();
     db.reverseIndex.resize(k);
-    for(crow = i = 0; i < nimg; ++i) //处理每张图像,"单词计数"
+    for(crow = i = 0; i < nimg; ++i){ //处理每张图像,"单词计数"
+      map<int,float>::iterator mit;
       for(j = 0; j < db.image[i].SIFTFeat.size(); ++j, ++crow)
+        //mlabel.at<int>(crow)为该特征所属的簇
         db.reverseIndex[mlabel.at<int>(crow)][db.subToID[i]] +=1;
-    //转化为词汇频率，归一化
-    for(i = 0; i < k; ++i){
-      map<long,float>::iterator mit=db.reverseIndex[i].begin();
-      for(; mit != db.reverseIndex[i].end(); ++mit)
-        mit->second /= db.image[i].SIFTFeat.size(); //除以图像特征数目
-    }//for
-    
-    //store to database
-    cerr << "writing to database\n";
+    }
+    //store cluster center to database
+    cerr << "writing cluster center and reverse information to database\n";
     db.writeCenter();
+
+    //一范式归一化 -> 转化为词汇频率，
+    for(i = 0; i < k; ++i){
+      map<int,float>::iterator mit=db.reverseIndex[i].begin();
+      for(; mit != db.reverseIndex[i].end(); ++mit)
+        mit->second /= db.image[db.idToSub[mit->first]].SIFTFeat.size(); //除以图像特征数目
+    }//for
+    for(i = 0; i < nimg; ++i){ //写入exData::word
+     db.image[i].word.clear();
+      db.image[i].word.resize(k);
+      for(j = 0; j < k; ++j)
+        db.image[i].word[j] = db.reverseIndex[j][db.subToID[i]];
+    }
+    //存入数据库
+    cerr << "writing word to database\n";
+    db.writeWord();
     cerr << "finished.\n";
   }
-  catch(exception &e)
-  {
+  catch(exception &e){
     cerr  << e.what();
   }  
   return 0;

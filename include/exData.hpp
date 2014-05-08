@@ -65,8 +65,6 @@ extern "C"
 #include <libpq-fe.h>
 } //libpq
 
-//连接数据库参数
-#define CONNECT_INFO "postgresql://pgsql:pgsql@10.21.23.104/imret"
 //初始化图像信息语句
 #define SQL_IMAGE_INFO "select imagePath,imageName,imageID from imageInfo "
 
@@ -98,7 +96,7 @@ private:
   PGresult *pgRes;  //数据库查询结果
   enum CMDT {connection,tuple,task};   //数据库SQL语句类型
   std::string condition; //初始化类所用的图像集
-
+  std::string  pgURI; //connection URI
 public:
   Matrix  clusterCenter; //每个簇对应的簇中心,k行
   std::vector<std::map<int,float> >  reverseIndex; //反向索引信息,k行
@@ -110,16 +108,13 @@ public:
 public:  
   //默认构造函数，从数据库中加载所有图像的路径及文件名(不含扩展名)
   //s 选择图像数据的where语句
-  exData(const char *s =NULL):condition(s),hbin(0),sbin(0)
-                             ,pgConn(NULL), pgRes(NULL)
-  {
+  exData(const char *s,const char *cons):condition(s),hbin(0),sbin(0)
+                             ,pgConn(NULL), pgRes(NULL) {
+    pgURI = cons; //must assign before getInfo()
     getInfo(s); //获取图像路径信息
-    //temp !!!
-    //image.resize(350);
   }
   //析构函数
-  ~exData()
-  {
+  ~exData() {
     if(pgRes)//free result
       PQclear(pgRes);
     if(pgConn)//free connection
@@ -177,8 +172,7 @@ public:
   
 private:
   //建立与数据库的连接 
-  void connectDB(const char *connInfo)
-  {
+  void connectDB(const char *connInfo)  {
     if(!pgConn) //未建立连接
       pgConn = PQconnectdb(connInfo);
     //检测执行状态
@@ -186,15 +180,12 @@ private:
   }
 
   //用空格替换不能被stringstream 解析的特殊字符
-  void clearS(std::string &s)
-  {
+  void clearS(std::string &s)  {
     int j;
-    for(j=0;j < s.size(); ++j) 
-    {
+    for(j=0;j < s.size(); ++j)  {
       if(s[j] == ',' || s[j] == '{' || s[j] == '}')
         s[j] =' ';
     }
-    
   }//clearS
 
   //test whether the command is execd ok

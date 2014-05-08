@@ -35,35 +35,41 @@ public:
 	//图片库直方图
 	vector<NAH> data;
 private:
-	//exData database;	//数据库对象
 	vector<float *> dataVec;	//保存mat中的data数据指针
-	void add(MR t);	//将t添加到result矢量中恰当的位置
+	void add(MR t);	//将t添加到result中恰当的位置
 	int h_bins, s_bins;	//h分量跟s分量的划分
 	int hist_size[2];
 	/** H 分量的变化范围 */
-	float h_ranges[2]; 
-	
+	float h_ranges[2]; 	
 	/** S 分量的变化范围*/
 	float s_ranges[2];
 	float *hist_ranges[2];
 private:
 public:
-	//获取一张图片的直方图
+	//获取一张图片的直方图，并把直方图保存在hist中
+	//pictureName:图片路径,hist：保存图片直方图
 	void pictureHist(const char * pictureName, CvHistogram *& hist);
-	void setBins(int h, int s);	//给h_bins, s_bins赋值
-	//读取全部数据到data中
-	bool readData(const char *db, exData &database);
-	//读取部分数据到data中
-	bool readFewData(vector<int> &fewPicture, exData &database);
-	//fileName匹配的图片路径，index:sift匹配结果的索引,n匹配结果数量，lowestPre最小精度
-	//对fileName建立直方图并与索引库index进行比较，如果n >= 0 使用n，否则使用精度，返回匹配图片数量
+	//给h_bins, s_bins赋值
+	void setBins(int h, int s);	
+	//读取数据库中的数据到data中
+	void readData(exData &database);
+	//读取数据库中部分数据到data中
+	//fewPictue:图片在数据库中的索引，database:数据库类对象
+	void readFewData(vector<int> &fewPicture, exData &database);	
+	//toMatch直方图与直方图数据库进行比较，匹配结果保存到属性result中，
+	//如果n >= 0 使用n，否则使用精度，返回匹配匹配结果图片数
+	//toMatch匹配的图片直方图，n匹配结果数量，lowestPre最小精度
+	int match(CvHistogram* toMatch, int n, double lowestPre = 0);
+	//toMatch直方图与数据库中索引在index中数组中的直方图进行比较，匹配结果保存到属性result中，
+	//如果n >= 0 使用n，否则使用精度，返回匹配匹配结果图片数
+	//toMatch匹配的图片直方图，n匹配结果数量，lowestPre最小精度
 	int match(CvHistogram *toMatch, vector<int> &index, int n, double lowestPre);
-	//写数据到db文件中
-	bool writeData(const char *db, exData &database);
-	//根据plLoc占位符无其他作用,创建数据库中图片路径的颜色直方图
-	bool buildHist(const char * plLoc, exData &database);
-	//imgs:多张图片路径
+	//写数据到数据库中
+	void writeData(exData &database);
+	//建立直方图,失败返回false
+	void buildHist(exData &database);
 	//建立多张图片的直方图
+	//imgs:多张图片路径	
 	void buildHist(vector<string> &imgs);
 	//释放数据空间
 	void release();

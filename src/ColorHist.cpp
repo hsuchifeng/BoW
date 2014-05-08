@@ -1,11 +1,10 @@
 
 #include "ColorHist.h"
 
-bool ColorHist::readFewData(vector<int> &fewPicture, exData &database)
+void ColorHist::readFewData(vector<int> &fewPicture, exData &database)
 {
 	data.clear();
 	dataVec.clear();
-	//database.readHS(h_bins, s_bins);
 	for(int i = 0; i < fewPicture.size(); i++)
 	{
 		NAH t;
@@ -16,14 +15,12 @@ bool ColorHist::readFewData(vector<int> &fewPicture, exData &database)
 		t.index = fewPicture[i];
 		data.push_back(t);
 	}
-	return true;
 }
 
-bool ColorHist::readData(const char *db, exData &database)
+void ColorHist::readData(exData &database)
 {
 	data.clear();
 	dataVec.clear();
-	//database.readHS(h_bins, s_bins);
 	for(int i = 0; i < database.image.size(); i++)
 	{
 		NAH t;
@@ -34,35 +31,6 @@ bool ColorHist::readData(const char *db, exData &database)
 		t.index = i;
 		data.push_back(t);
 	}
-	return true;
-	/*char line[100000];
-	float *d;
-	stringstream s;*/
-	//清空数据库
-	/*data.clear();
-	dataVec.clear();
-	while(!fileIn.eof())
-	{
-		NAH t;
-		fileIn.getline(line, sizeof(line));
-		if(strlen(line) == 0)
-			continue;
-		s << line;
-		t.hist = cvCreateHist(2, hist_size, CV_HIST_ARRAY, hist_ranges, 1); 
-		s >> t.loc;
-		d = new float[s_bins * h_bins + 1];
-		dataVec.push_back(d);
-		for(int i = 0; !s.eof(); i++)
-		{
-			if(i >= s_bins * h_bins + 1)
-				return false;
-			s >> d[i];
-		}
-		cvMakeHistHeaderForArray(2, hist_size, t.hist, d, hist_ranges, 1);
-		data.push_back(t);
-		s.clear();
-	}*/
-	/*return true;*/
 }
 
 bool cmp(const MR &a,const MR &b)
@@ -127,7 +95,47 @@ int ColorHist::match(CvHistogram *toMatch, vector<int> &index, int n, double low
 	return 0;
 }
 
-bool ColorHist::buildHist(const char * plLoc, exData &database)
+int ColorHist::match(CvHistogram *toMatch, int n, double lowestPre)
+{
+	//提取n张匹配图片
+	result.clear();
+	MR t; 
+	if(n > 0)
+	{
+		for(int i = 0; i < data.size(); i++)
+		{
+			t.loc = data[i].loc;
+			t.index = data[i].index;
+			t.d = cvCompareHist(toMatch, data[i].hist, CV_COMP_INTERSECT);
+			if(i < n)
+			{
+				result.push_back(t); continue;
+			}
+			else if(i == n)
+				sort(result.begin(), result.end(), cmp);
+			if(t.d > result[result.size() - 1].d)
+				add(t);	
+		}	
+	}
+	//提取精度大于等于lowestPre的图片
+	else
+	{
+		for(int i = 0; i < data.size(); i++)
+		{
+			t.loc = data[i].loc;
+			t.index = data[i].index;
+			t.d = cvCompareHist(toMatch, data[i].hist, CV_COMP_INTERSECT);
+			if(t.d >= lowestPre)
+			{
+				result.push_back(t);
+			}
+		}
+		sort(result.begin(), result.end(), cmp);
+	}
+	return 0;
+}
+
+void ColorHist::buildHist(exData &database)
 {
 	NAH t;
 	data.clear();
@@ -138,26 +146,6 @@ bool ColorHist::buildHist(const char * plLoc, exData &database)
 		pictureHist(t.loc.c_str(), t.hist);
 		data.push_back(t);
 	}
-	return true;
-	//NAH t;
-	//char img_file_name[MAX_PATH];	//单个图片路径
-	//data.clear();
-	//ifstream file(plLoc);
-	//if(!file.is_open())
-	//{
-	//	return false;
-	//}
-	//while(!file.eof())
-	//{
-	//	file.getline(img_file_name, 5000);
-	//	if(strlen(img_file_name) == 0)
-	//		continue;
-	//	t.loc = img_file_name;
-	//	pictureHist(img_file_name,  t.hist);
-	//	data.push_back(t);
-	//}
-	//file.close();
-	//return true;
 }
 
 void ColorHist::buildHist(vector<string> &imgs)
@@ -174,8 +162,8 @@ void ColorHist::buildHist(vector<string> &imgs)
 
 void ColorHist::pictureHist(const char * pictureName, CvHistogram *& hist)
 {
-	IplImage * src;
-  src=cvLoadImage(pictureName);
+	IplImage * src= cvLoadImage(pictureName);
+ 
 	IplImage* hsv = cvCreateImage( cvGetSize(src), 8, 3 );
 	IplImage* h_plane = cvCreateImage( cvGetSize(src), 8, 1 );
 	IplImage* s_plane = cvCreateImage( cvGetSize(src), 8, 1 );
@@ -191,7 +179,6 @@ void ColorHist::pictureHist(const char * pictureName, CvHistogram *& hist)
 	cvCalcHist( planes, hist, 0, 0 );
 	float * f = cvGetHistValue_2D(hist, 0, 0);
 	(*f) = 0;
-
 	cvNormalizeHist(hist, 1);
 	cvThreshHist(hist, 0.0001);
 	cvReleaseImage(&src);
@@ -207,16 +194,12 @@ void ColorHist::release()
 	{
 		cvReleaseHist(&data[i].hist);
 	}
-	/*for(int i = 0; i < dataVec.size(); i++)
-	{
-		delete[] dataVec[i];
-	}*/
 	dataVec.clear();
 	data.clear();
 	result.clear();
 }
 
-bool ColorHist::writeData(const char *db, exData &database)
+void ColorHist::writeData(exData &database)
 {
 
 	database.hbin = h_bins;
@@ -228,22 +211,6 @@ bool ColorHist::writeData(const char *db, exData &database)
 				database.image[i].hs.push_back(cvQueryHistValue_2D(data[i].hist, j, k));
 	}
 	database.writeHS();
-	return true;
-	/*ofstream fileOut(db);
-	if(!fileOut.is_open())
-		return false;
-	for(int i = 0; i < data.size(); i++)
-	{
-		fileOut << data[i].loc << " ";
-		for(int j = 0; j < h_bins; j++)
-			for(int k = 0; k < s_bins; k++)
-			{
-				fileOut << cvQueryHistValue_2D(data[i].hist, j, k) << " ";
-			}
-		fileOut << endl;
-	}
-	fileOut.close();
-	return true;*/
 }
 
 void ColorHist::setBins(int h, int s)

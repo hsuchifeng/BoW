@@ -87,9 +87,15 @@ int main(int argc, char** argv)
       port = atoi(argv[3]);
   }
 
+  if(hasValue(conf,"PGURI")) //check connection URI
+    cerr<<"connection URI:" << conf["PGURI"] <<"\n";
+  else{
+    cerr<<"no connection URI specific\n";
+    return 1;
+  }
     
   try{
-    exData db(conf["image"].c_str()); //数据库数据
+    exData db(conf["image"].c_str(),conf["PGURI"].c_str()); //数据库数据
     int    listenfd, cltfd;
     struct sockaddr_in     servaddr;
     int pid;  //进程id
@@ -98,8 +104,8 @@ int main(int argc, char** argv)
     db.readCenter(k); //get cluster center
     cerr<<"reading imagevisual word\n";
     db.readWord(k); //get word for every image
-    // cerr<<"reading hs histogram\n";
-    //db.readHS(hbin,sbin);
+    cerr<<"reading hs histogram\n";
+    db.readHS(hbin,sbin);
           
     //create master socket
     if( (listenfd = socket(AF_INET, SOCK_STREAM, 0)) == -1 ){
@@ -181,8 +187,7 @@ dealRequest(int fd, exData &db){
   //parse data
   rq.ParseFromString(string(buf,n));
   
-  if(rq.has_image())   //first request
-  {
+  if(rq.has_image()) { //first request
     int imgfd; //图像临时文件
     //生成临时文件
     imgfd=mkstemp(imgPath);
@@ -204,27 +209,25 @@ dealRequest(int fd, exData &db){
     cerr<<"info:word match result\n";
     DEBUG_OUTPUT
 #endif
-      }else     //filter
+#if 0 //hs match
+      matchBaseColor(imgPath, db,result);
+#if DEBUG
+    cerr<<"info:hs histogram match result\n";
+    DEBUG_OUTPUT
+#endif //debug
+#endif //hs match
+      } else     //filter
     for(i =0 ; i < rq.id_size(); ++i)
       result.push_back(rq.id(i));
   originID = result; //save originID
 
 
-#if 0 //hs match
-  matchBaseColor(imgPath, db,result);
-#if DEBUG
-  cerr<<"info:hs histogram match result\n";
-  DEBUG_OUTPUT
-#endif //debug
-#endif //hs match
-
-#if 0 //hs filter
-    vector<CvScalar> acolor(0); //必须出现的颜色,RGB
+#if 1 //hs filter
+  vector<CvScalar> acolor(0); //必须出现的颜色,RGB
   vector<CvScalar> dcolor(0); //不能出现的颜色, RGB
   CvScalar tmpcvs;
   //accept color
-  for(i = 0; i < rq.needcolor_size() ;++i)
-  {
+  for(i = 0; i < rq.needcolor_size() ;++i){
     const Request::Color& ac=rq.needcolor(i);
     tmpcvs.val[0] = ac.r();
     tmpcvs.val[1] = ac.g();
@@ -232,8 +235,7 @@ dealRequest(int fd, exData &db){
     acolor.push_back(tmpcvs);
   }
   //deny color
-  for(i = 0; i < rq.denycolor_size() ;++i)
-  {
+  for(i = 0; i < rq.denycolor_size() ;++i)  {
     const Request::Color& ac=rq.denycolor(i);
     tmpcvs.val[0] = ac.r();
     tmpcvs.val[1] = ac.g();

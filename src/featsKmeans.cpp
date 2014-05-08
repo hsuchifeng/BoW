@@ -52,9 +52,16 @@ main(int argc, char **argv){
     return 1;
   }else
     cerr<<"maxCount="<<conf["maxCount"] <<"\n";
+
+  if(hasValue(conf,"PGURI")) //check connection URI
+    cerr<<"connection URI:" << conf["PGURI"] <<"\n";
+  else{
+    cerr<<"error:no connection URI specific\n";
+    return 1;
+  }
   
   try{
-    exData db(conf["image"].c_str()); //数据集
+    exData db(conf["image"].c_str(),conf["PGURI"].c_str()); //数据集
     int k = atoi(conf["k"].c_str()); //簇的数目
     float precision = atof(conf["precision"].c_str()); //精度
     int maxCount = atoi(conf["maxCount"].c_str()); //最大迭代次数

@@ -51,7 +51,7 @@ void exData::getInfo(const char * condiction)
   std::string sql=SQL_IMAGE_INFO;
   sql += condiction;
   
-  connectDB(CONNECT_INFO); //连接数据库
+  connectDB(pgURI.c_str()); //连接数据库
   pgRes = PQexec(pgConn,sql.c_str());
   //is command exec ok
   statusOK("error:exec select from imageInfo", tuple);
@@ -92,7 +92,7 @@ int exData::readSIFTFromDB()
   std::vector<float> tmp; //储存特征
   float d;
 
-  connectDB(CONNECT_INFO); //连接数据库
+  connectDB(pgURI.c_str()); //连接数据库
   for(n = 0; n < nimage; ++n){ //读取每张图像
     std::cerr<<"reading image " << n+1 << "," <<image[n].imagePath <<"\n";
     PQclear(pgRes);
@@ -142,7 +142,7 @@ void exData::writeSIFT()
   std::stringstream sst;
   std::string s; 
 
-  connectDB(CONNECT_INFO);
+  connectDB(pgURI.c_str());
   //keep atom
   pgRes = PQexec(pgConn,"BEGIN");
   statusOK("error:exec BEGIN",task);
@@ -199,7 +199,7 @@ void exData::readHS(int hb, int sb)
   float d;
   char *cons = PQescapeLiteral(pgConn,condition.c_str(),condition.length());
   
-  connectDB(CONNECT_INFO); //连接数据库
+  connectDB(pgURI.c_str()); //连接数据库
   //查询颜色直方图
   sst.str("");
   sst.clear();
@@ -214,8 +214,11 @@ void exData::readHS(int hb, int sb)
   idindex = PQfnumber(pgRes,"imageID");
   hsindex= PQfnumber(pgRes,"hs");
   nrow = PQntuples(pgRes);  //行数
-  if(nrow != image.size()) //检查图像数与结果数是否相等
+  if(nrow != image.size()) {//检查图像数与结果数是否相等
+    std::cerr << "condition="<<condition << "h="<<hb<< "s=" <<sb<<"\n";
+    std::cerr << nrow << " row result,image size=" << image.size() <<"\n";
     throw std::invalid_argument("error:image number doesn't match hs number");
+  }
   for(i = 0; i < nrow; ++i)
   {
     //转换id为整数
@@ -255,7 +258,7 @@ void exData::writeHS()
   std::string s; 
   char *cons = PQescapeLiteral(pgConn,condition.c_str(),condition.length());
   
-  connectDB(CONNECT_INFO);
+  connectDB(pgURI.c_str());
   //keep atom
   pgRes = PQexec(pgConn,"BEGIN");
   statusOK("error:exec BEGIN",task);
@@ -309,7 +312,7 @@ void exData::readCenter( int k)
   std::map<int,float> rev; //单个反向索引信息
   char *cons = PQescapeLiteral(pgConn,condition.c_str(),condition.length());
   
-  connectDB(CONNECT_INFO); //连接数据库
+  connectDB(pgURI.c_str()); //连接数据库
   //    std::cerr <<"connect ok\n";
   sst.str("");
   sst.clear();
@@ -380,7 +383,7 @@ void exData::writeCenter()
   std::stringstream sst;
   std::string s;
   char *cons = PQescapeLiteral(pgConn,condition.c_str(),condition.length());
-  connectDB(CONNECT_INFO);
+  connectDB(pgURI.c_str());
   //keep atom
   pgRes = PQexec(pgConn,"BEGIN");
   statusOK("error:exec BEGIN",task);
@@ -446,7 +449,7 @@ void exData::readWord(int wdDem)
   float d;
   char *cons = PQescapeLiteral(pgConn,condition.c_str(),condition.length());
   
-  connectDB(CONNECT_INFO); //连接数据库
+  connectDB(pgURI.c_str()); //连接数据库
   //查询词汇,默认k=128
   sst.str("");
   sst.clear();
@@ -493,7 +496,7 @@ void exData::writeWord()
   std::stringstream sst;
   std::string s;
   char *cons = PQescapeLiteral(pgConn,condition.c_str(),condition.length());
-  connectDB(CONNECT_INFO);
+  connectDB(pgURI.c_str());
   k = image[0].word.size(); //以第一个大小初始化
   //keep atom
   pgRes = PQexec(pgConn,"BEGIN");
@@ -587,5 +590,3 @@ int exData::readSIFTFromFile(const char *csv){
   }//while
   return r;
 }//readSIFTFromFile
-
-

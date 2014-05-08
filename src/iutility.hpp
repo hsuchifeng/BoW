@@ -278,9 +278,8 @@ matchWord(const std::vector<std::vector<float> > &userFeats,
     throw std::invalid_argument("empty  user image word");
   if(userWord.size() != db.reverseIndex.size())
     throw std::invalid_argument("size of user word != cluster size");
-
-#if 1 //使用反向索引
   clock_t t=clock();
+#if 0 //使用反向索引
   std::cerr<<"\nusing reverse information\n";
   for(i = 0; i < db.reverseIndex.size(); ++i){ //遍历每个簇中心
     if(userWord[i] == 0) //ignore
@@ -294,11 +293,9 @@ matchWord(const std::vector<std::vector<float> > &userFeats,
   }//for
 
   //计算最终结果,revType::sim
-  std::cerr<<"result size:" << revSim.size() <<"\n";
   for(rmit = revSim.begin();rmit != revSim.end(); ++rmit){ //计算余弦相似度^2
     tmp.sim=(rmit->second.up*rmit->second.up)/(rmit->second.l1*rmit->second.l2);
     tmp.id= rmit->first;
-    std::cerr<<tmp.sim<<"\n";
     resPQ.push(tmp);
   }
   //提取结果，使用优先队列
@@ -320,8 +317,7 @@ matchWord(const std::vector<std::vector<float> > &userFeats,
   std::cerr <<"db size:" <<db.image.size() <<std::endl;
   for(i = 0; i < db.image.size(); ++i){//每张图像
     //using cosin similarity
-    if(db.image[i].word.size() != d)
-    {
+    if(db.image[i].word.size() != d)  {
       std::cerr <<"cur image " << i<< std::endl;
       std::cerr <<"word size :" <<db.image[i].word.size() <<std::endl;
     }
@@ -396,7 +392,7 @@ void readConf(std::map<std::string,std::string> &res,
     sst.str("");
     sst.clear();
     sst << s;
-    while(sst.good()){ //跳过空格
+    while(sst.good()){ //跳过空格 
       c = sst.get();
       if(c == ' ' || c == '\n' || c =='\t')
         continue;
@@ -404,6 +400,8 @@ void readConf(std::map<std::string,std::string> &res,
       break;
     }//while
     getline(sst,s);
+    if(s[0] == '#') //skip comment
+      continue;
     //读取key
     //找到第一个 =
     st = s.find('=');

@@ -7,11 +7,10 @@ void cFilter(vector<int> &match, vector<CvScalar> &rgb, vector<CvScalar> &notRgb
 	ColorFilter cf;
 	vector<CvScalar> hsv;
 	vector<CvScalar> notHsv;
-	int h_bins, s_bins;
-
-
-  if(rgb.empty() && notRgb.empty() ) //nothing to do
-    return;
+	int h_bins, s_bins, t;
+	float d;
+  //  if(rgb.empty() && notRgb.empty() )
+    // return;
 	h_bins = database.hbin;
 	s_bins = database.sbin;
 	cf.setBins(h_bins, s_bins);

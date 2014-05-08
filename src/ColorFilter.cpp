@@ -116,6 +116,7 @@ void ColorFilter::match(vector<int> &pL, vector<CvScalar> &hsv, vector<CvScalar>
 		p.loc = hist.data[i].loc;
 		p.index = hist.data[i].index;
 		p.matchValue = t;
+
 		pcm.push_back(p);
 	}
 	sort(pcm.begin(), pcm.end(), cmp);

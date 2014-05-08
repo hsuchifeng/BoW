@@ -18,24 +18,18 @@ void readargument(int &n, float &lowestPre)
 {
 	ColorHist match;
 	CvHistogram *hist;
-	char to[500];
 	int h_bins, s_bins, n;
 	float lowestPre;
 	string t;
-
-	//time_t start;
 
 	h_bins = database.hbin;
 	s_bins = database.sbin;
 	readargument(n, lowestPre);
 	match.setBins(h_bins, s_bins);
-	//start = clock();
-	match.readData(to, database);	
-	//cout << "转换数据库时间:" << (clock() - start)  << endl;
+	match.readData(database);	
+	Mat image = imread(pictureName);
 	match.pictureHist(pictureName, hist);
-	//start = clock();
 	match.match(hist, indexResult, n, lowestPre);
-	//cout << "匹配时间:" << (clock() - start)  << endl;
 	indexResult.clear();
 	for(int i = 0; i < match.result.size(); i++)
 	{

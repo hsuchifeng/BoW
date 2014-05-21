@@ -1,25 +1,28 @@
 * 视觉词袋模型
-* 目录介绍
+** 目录介绍
   - bin/ 包含二进制文件
   - conf/ 一系列配置文件
   - imgInfo/ 图像文件集及提取图像信息的脚本
   - include/ 头文件
   - src/ 源文件
   - mist/ 数据库表生成文件及Google protobuf定义文件
-* 依赖
+** 依赖
   - opencv >= 2.0 且编译NONFree 库 
   - postgresql >= 9.0 
   - ImageMagick ,在用脚本提取图像信息的时候用到
   - Google Protobuf ,图像检索服务器用于客户端通讯
 
-* 安装
+** 安装
   1) 创建数据库及相应的表
+     #+BEGIN_SRC sh
      # 创建名为 imret的数据库,在PostgreSQL中可能需要切换到pgsql用户才有权限
      $ createdb imret 
      $ cd mist
-     $使用用户 pgsql 在数据库imret中 创建表
+     # 使用用户 pgsql 在数据库imret中 创建表
      $ psql -U pgsql -d imret -f ./createTB.sql
+     #+END_SRC
   2) 添加图像集，读取图像信息，写入数据库
+     #+BEGIN_SRC sh
      # 假设图像集放在目录 mist/img/PI100 下
      $ cd mist
      # 读取图像信息, 并以带头CSV格式输出到标准输出，使用重定向写入到文件
@@ -27,12 +30,15 @@
      # 上述命令的第2个参数为图像集的标签
      # 将图像信息写入数据库，参数为 ./readImgInfo.sh 生成的文件,默认使用pgsql用户
      $ ./writeImgInfoDB.sh PI100.csv
+     #+END_SRC
   3) 生成二进制可执行文件
+     #+BEGIN_SRC sh
      $ cd src
      $ make all
      # 生成的可执行代码放在 bin/目录下
+     #+END_SRC
 
-* 配置文件
+** 配置文件
   配置文件的形式为key="value" ,以 # 开头的为注释
   支持的key如下:
   - PGURI,连接数据库的URI,egg:postgresql://username:password@server-address/database
@@ -43,26 +49,34 @@
   - nresult, 图像检索服务器返回的最大结果数
   - resultSimilarity, 图像检索服务器返回结果的最小相似度[0,1]
 
-* 使用
-  - 计算SIFT特征
-    # 确保在bin/ 目录下的可执行文件能够读取图像集
-    $ cd bin
-    $ ln -s ../imgInfo/img img
-    # 先手动写入CSV文件的头
-    $ echo "imageID,position,feature" > PI100_SIFT.csv
-    # ./calcSift 的参数为配置文件路径,结果会输出到标准输出，运行状态会输出到标准错误
-    $ ./calcSift ../conf/PI100.conf >> PI100_SIFT.csv
-    至此img/PI100目录下的图像的SIFT特征均存提取并存放在文件PI100_SIFT.csv
+** 使用
+  1) 计算SIFT特征
+     #+BEGIN_SRC sh
+     # 确保在bin/ 目录下的可执行文件能够读取图像集
+     $ cd bin
+     $ ln -s ../imgInfo/img img
+     # 先手动写入CSV文件的头
+     $ echo "imageID,position,feature" > PI100_SIFT.csv
+     # ./calcSift 的参数为配置文件路径,结果会输出到标准输出，运行状态会输出到标准错误
+     $ ./calcSift ../conf/PI100.conf >> PI100_SIFT.csv
+     #+END_SRC
+     至此img/PI100目录下的图像的SIFT特征均存提取并存放在文件PI100_SIFT.csv
     
-  - 统计视觉词汇频率直方图
-    # ./featsKmeans 需要两个参数，第一个为配置文件，第二个为含有头的SIFT的csv文件,
-    # 结果会写入数据库
-    $ ./featsKmeans ../conf/PI100.conf PI100_SIFT.csv
-  - 运行图像检索服务器
-    $ ./server ../conf/PI100.conf
-  - 向图像检索服务器发出检索请求
-    $ ./client <path-to-img> [server-ip] [server-port]
+  2) 统计视觉词汇频率直方图
+     #+BEGIN_SRC sh
+     # ./featsKmeans 需要两个参数，第一个为配置文件，第二个为含有头的SIFT的csv文件,
+     # 结果会写入数据库
+     $ ./featsKmeans ../conf/PI100.conf PI100_SIFT.csv
+     #+END_SRC
+  3) 运行图像检索服务器
+     #+BEGIN_SRC sh
+     $ ./server ../conf/PI100.conf
+     #+END_SRC
+  4) 向图像检索服务器发出检索请求
+     #+BEGIN_SRC sh
+     $ ./client <path-to-img> [server-ip] [server-port]
+     #+END_SRC
 
-* Bug
+** Bug
   Report bug
   szive(at)live.com

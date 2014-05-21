@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>README</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+<meta name="title" content="README"/>
+<meta name="generator" content="Org-mode"/>
+<meta name="generated" content="2014-05-21T13:25+0800"/>
+<meta name="author" content="Hsu Chifeng"/>
+<meta name="description" content=""/>
+<meta name="keywords" content=""/>
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  html { font-family: Times, serif; font-size: 12pt; }
+  .title  { text-align: center; }
+  .todo   { color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #add8e6; font-weight:normal }
+  .target { }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  {margin-left:auto; margin-right:0px;  text-align:right;}
+  .left   {margin-left:0px;  margin-right:auto; text-align:left;}
+  .center {margin-left:auto; margin-right:auto; text-align:center;}
+  p.verse { margin-left: 3% }
+  pre {
+	border: 1pt solid #AEBDCC;
+	background-color: #F3F5F7;
+	padding: 5pt;
+	font-family: courier, monospace;
+        font-size: 90%;
+        overflow:auto;
+  }
+  table { border-collapse: collapse; }
+  td, th { vertical-align: top;  }
+  th.right  { text-align:center;  }
+  th.left   { text-align:center;   }
+  th.center { text-align:center; }
+  td.right  { text-align:right;  }
+  td.left   { text-align:left;   }
+  td.center { text-align:center; }
+  dt { font-weight: bold; }
+  div.figure { padding: 0.5em; }
+  div.figure p { text-align: center; }
+  div.inlinetask {
+    padding:10px;
+    border:2px solid gray;
+    margin:10px;
+    background: #ffffcc;
+  }
+  textarea { overflow-x: auto; }
+  .linenr { font-size:smaller }
+  .code-highlighted {background-color:#ffff00;}
+  .org-info-js_info-navigation { border-style:none; }
+  #org-info-js_console-label { font-size:10px; font-weight:bold;
+                               white-space:nowrap; }
+  .org-info-js_search-highlight {background-color:#ffff00; color:#000000;
+                                 font-weight:bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+
+</head>
+<body>
+
+<div id="preamble">
+
+</div>
+
+<div id="content">
+<h1 class="title">README</h1>
+
+
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#sec-1">1 视觉词袋模型</a>
+<ul>
+<li><a href="#sec-1-1">1.1 目录介绍</a></li>
+<li><a href="#sec-1-2">1.2 依赖</a></li>
+<li><a href="#sec-1-3">1.3 安装</a></li>
+<li><a href="#sec-1-4">1.4 配置文件</a></li>
+<li><a href="#sec-1-5">1.5 使用</a></li>
+<li><a href="#sec-1-6">1.6 Bug</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> 视觉词袋模型</h2>
+<div class="outline-text-2" id="text-1">
+
+
+</div>
+
+<div id="outline-container-1-1" class="outline-3">
+<h3 id="sec-1-1"><span class="section-number-3">1.1</span> 目录介绍</h3>
+<div class="outline-text-3" id="text-1-1">
+
+<ul>
+<li>bin/ 包含二进制文件
+</li>
+<li>conf/ 一系列配置文件
+</li>
+<li>imgInfo/ 图像文件集及提取图像信息的脚本
+</li>
+<li>include/ 头文件
+</li>
+<li>src/ 源文件
+</li>
+<li>mist/ 数据库表生成文件及Google protobuf定义文件
+</li>
+</ul>
+
+</div>
+
+</div>
+
+<div id="outline-container-1-2" class="outline-3">
+<h3 id="sec-1-2"><span class="section-number-3">1.2</span> 依赖</h3>
+<div class="outline-text-3" id="text-1-2">
+
+<ul>
+<li>opencv &gt;= 2.0 且编译NONFree 库 
+</li>
+<li>postgresql &gt;= 9.0 
+</li>
+<li>ImageMagick ,在用脚本提取图像信息的时候用到
+</li>
+<li>Google Protobuf ,图像检索服务器用于客户端通讯
+</li>
+</ul>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-1-3" class="outline-3">
+<h3 id="sec-1-3"><span class="section-number-3">1.3</span> 安装</h3>
+<div class="outline-text-3" id="text-1-3">
+
+<ol>
+<li>创建数据库及相应的表
+
+
+
+<pre class="src src-sh"><span style="color: #73d216;"># </span><span style="color: #73d216;">&#21019;&#24314;&#21517;&#20026; imret&#30340;&#25968;&#25454;&#24211;,&#22312;PostgreSQL&#20013;&#21487;&#33021;&#38656;&#35201;&#20999;&#25442;&#21040;pgsql&#29992;&#25143;&#25165;&#26377;&#26435;&#38480;</span>
+$ createdb imret 
+$ cd mist
+<span style="color: #73d216;"># </span><span style="color: #73d216;">&#20351;&#29992;&#29992;&#25143; pgsql &#22312;&#25968;&#25454;&#24211;imret&#20013; &#21019;&#24314;&#34920;</span>
+$ psql -U pgsql -d imret -f ./createTB.sql
+</pre>
+
+</li>
+<li>添加图像集，读取图像信息，写入数据库
+
+
+
+<pre class="src src-sh"><span style="color: #73d216;"># </span><span style="color: #73d216;">&#20551;&#35774;&#22270;&#20687;&#38598;&#25918;&#22312;&#30446;&#24405; mist/img/PI100 &#19979;</span>
+$ cd mist
+<span style="color: #73d216;"># </span><span style="color: #73d216;">&#35835;&#21462;&#22270;&#20687;&#20449;&#24687;, &#24182;&#20197;&#24102;&#22836;CSV&#26684;&#24335;&#36755;&#20986;&#21040;&#26631;&#20934;&#36755;&#20986;&#65292;&#20351;&#29992;&#37325;&#23450;&#21521;&#20889;&#20837;&#21040;&#25991;&#20214;</span>
+$ ./readImgInfo.sh img/PI100 PI100 &gt; PI100.csv
+<span style="color: #73d216;"># </span><span style="color: #73d216;">&#19978;&#36848;&#21629;&#20196;&#30340;&#31532;2&#20010;&#21442;&#25968;&#20026;&#22270;&#20687;&#38598;&#30340;&#26631;&#31614;</span>
+<span style="color: #73d216;"># </span><span style="color: #73d216;">&#23558;&#22270;&#20687;&#20449;&#24687;&#20889;&#20837;&#25968;&#25454;&#24211;&#65292;&#21442;&#25968;&#20026; ./readImgInfo.sh &#29983;&#25104;&#30340;&#25991;&#20214;,&#40664;&#35748;&#20351;&#29992;pgsql&#29992;&#25143;</span>
+$ ./writeImgInfoDB.sh PI100.csv
+</pre>
+
+</li>
+<li>生成二进制可执行文件
+
+
+
+<pre class="src src-sh">$ cd src
+$ make all
+<span style="color: #73d216;"># </span><span style="color: #73d216;">&#29983;&#25104;&#30340;&#21487;&#25191;&#34892;&#20195;&#30721;&#25918;&#22312; bin/&#30446;&#24405;&#19979;</span>
+</pre>
+
+</li>
+</ol>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-1-4" class="outline-3">
+<h3 id="sec-1-4"><span class="section-number-3">1.4</span> 配置文件</h3>
+<div class="outline-text-3" id="text-1-4">
+
+<p>  配置文件的形式为key="value" ,以 # 开头的为注释
+  支持的key如下:
+</p><ul>
+<li>PGURI,连接数据库的URI,egg:postgresql://username:password@server-address/database
+</li>
+<li>image,用于选择初始化的图像集，imageClass为给图像的标签
+</li>
+<li>k ,k-means聚类时使用的k
+</li>
+<li>precision, k-means收敛的精度
+</li>
+<li>maxCount, k-means的最大迭代次数
+</li>
+<li>nresult, 图像检索服务器返回的最大结果数
+</li>
+<li>resultSimilarity, 图像检索服务器返回结果的最小相似度[0,1]
+</li>
+</ul>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-1-5" class="outline-3">
+<h3 id="sec-1-5"><span class="section-number-3">1.5</span> 使用</h3>
+<div class="outline-text-3" id="text-1-5">
+
+<ol>
+<li>计算SIFT特征
+
+
+
+<pre class="src src-sh"><span style="color: #73d216;"># </span><span style="color: #73d216;">&#30830;&#20445;&#22312;bin/ &#30446;&#24405;&#19979;&#30340;&#21487;&#25191;&#34892;&#25991;&#20214;&#33021;&#22815;&#35835;&#21462;&#22270;&#20687;&#38598;</span>
+$ cd bin
+$ ln -s ../imgInfo/img img
+<span style="color: #73d216;"># </span><span style="color: #73d216;">&#20808;&#25163;&#21160;&#20889;&#20837;CSV&#25991;&#20214;&#30340;&#22836;</span>
+$ echo <span style="color: #e9b96e;">"imageID,position,feature"</span> &gt; PI100_SIFT.csv
+<span style="color: #73d216;"># </span><span style="color: #73d216;">./calcSift &#30340;&#21442;&#25968;&#20026;&#37197;&#32622;&#25991;&#20214;&#36335;&#24452;,&#32467;&#26524;&#20250;&#36755;&#20986;&#21040;&#26631;&#20934;&#36755;&#20986;&#65292;&#36816;&#34892;&#29366;&#24577;&#20250;&#36755;&#20986;&#21040;&#26631;&#20934;&#38169;&#35823;</span>
+$ ./calcSift ../conf/PI100.conf &gt;&gt; PI100_SIFT.csv
+</pre>
+
+<p>
+     至此img/PI100目录下的图像的SIFT特征均存提取并存放在文件PI100<sub>SIFT</sub>.csv
+</p>
+</li>
+<li>统计视觉词汇频率直方图
+
+
+
+<pre class="src src-sh"><span style="color: #73d216;"># </span><span style="color: #73d216;">./featsKmeans &#38656;&#35201;&#20004;&#20010;&#21442;&#25968;&#65292;&#31532;&#19968;&#20010;&#20026;&#37197;&#32622;&#25991;&#20214;&#65292;&#31532;&#20108;&#20010;&#20026;&#21547;&#26377;&#22836;&#30340;SIFT&#30340;csv&#25991;&#20214;,</span>
+<span style="color: #73d216;"># </span><span style="color: #73d216;">&#32467;&#26524;&#20250;&#20889;&#20837;&#25968;&#25454;&#24211;</span>
+$ ./featsKmeans ../conf/PI100.conf PI100_SIFT.csv
+</pre>
+
+</li>
+<li>运行图像检索服务器
+
+
+
+<pre class="src src-sh">$ ./server ../conf/PI100.conf
+</pre>
+
+</li>
+<li>向图像检索服务器发出检索请求
+
+
+
+<pre class="src src-sh">$ ./client &lt;path-to-img&gt; [server-ip] [server-port]
+</pre>
+
+</li>
+</ol>
+
+
+</div>
+
+</div>
+
+<div id="outline-container-1-6" class="outline-3">
+<h3 id="sec-1-6"><span class="section-number-3">1.6</span> Bug</h3>
+<div class="outline-text-3" id="text-1-6">
+
+<p>  Report bug
+  szive(at)live.com
+</p></div>
+</div>
+</div>
+</div>
+
+<div id="postamble">
+<p class="date">Date: 2014-05-21T13:25+0800</p>
+<p class="author">Author: Hsu Chifeng</p>
+<p class="creator"><a href="http://orgmode.org">Org</a> version 7.9.3f with <a href="http://www.gnu.org/software/emacs/">Emacs</a> version 24</p>
+<a href="http://validator.w3.org/check?uri=referer">Validate XHTML 1.0</a>
+
+</div>
+</body>
+</html>

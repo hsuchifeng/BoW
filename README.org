@@ -70,6 +70,10 @@
      #+END_SRC
   3) 运行图像检索服务器
      #+BEGIN_SRC sh
+     # 服务器将缓存文件放在当前目录的 userData/cache文件夹下，需要新建这个文件夹
+     $ cd bin
+     $ mkdir userData
+     $ mkdir userData/cache
      $ ./server ../conf/PI100.conf
      #+END_SRC
   4) 向图像检索服务器发出检索请求

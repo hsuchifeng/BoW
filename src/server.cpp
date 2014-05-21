@@ -222,7 +222,7 @@ dealRequest(int fd, exData &db){
   originID = result; //save originID
 
 
-#if 1 //hs filter
+#if 0 //hs filter
   vector<CvScalar> acolor(0); //必须出现的颜色,RGB
   vector<CvScalar> dcolor(0); //不能出现的颜色, RGB
   CvScalar tmpcvs;

@@ -39,15 +39,17 @@
      #+END_SRC
 
 ** 配置文件
-  配置文件的形式为key="value" ,以 # 开头的为注释
+   配置文件的每行均为key="value" 形式,以 # 开头的为注释
   支持的key如下:
   - PGURI,连接数据库的URI,egg:postgresql://username:password@server-address/database
-  - image,用于选择初始化的图像集，imageClass为给图像的标签
+  - image,用于选择初始化的图像集，imageClass为给图像的标签,改语句实际为SQL语句中的where子句，
+    所以可以加入其它符合SQL语法的命令。这个值确定好后不要修改，不然会无法读取已经写入的数据！
   - k ,k-means聚类时使用的k
   - precision, k-means收敛的精度
   - maxCount, k-means的最大迭代次数
   - nresult, 图像检索服务器返回的最大结果数
   - resultSimilarity, 图像检索服务器返回结果的最小相似度[0,1]
+    
 
 ** 使用
   1) 计算SIFT特征
@@ -82,5 +84,4 @@
      #+END_SRC
 
 ** Bug
-  Report bug
-  szive(at)live.com
+  Report bug szive(at)live.com

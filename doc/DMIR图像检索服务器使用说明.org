@@ -1,0 +1,100 @@
+* DMIR图像检索服务器使用说明
+** 登录服务器
+   内网ssh登录，windows平台下可以使用putty.
+   - 服务器IP: 10.21.23.125
+   - 用户名: imret
+   - 密码:  imret
+** 目录说明
+   项目的文件均位于/home/imret/imret目录下,其中
+   - DataSet/ 文件夹存放数据集文件,包括PI100 和 256_ObjectCategories两个数据集。其中
+
+     PI100含有图像9 917张,每张图像的分辨率均为100*100。256_ObjectCategories含有图像
+
+     30 598张,图像有大有小。
+   - imgInfo/ 文件夹包含用于读取图像信息的两个shell脚本,以及指向 DataSet 特定图像的软
+
+     链接,建议把实验结果存放与此文件夹。
+   - bin/ 包含用于提取SIFT特征，聚类，图像检索服务器/客户端。这些命令都可以不带参数调用
+
+     以查看使用方法
+   - src/ 实现源文件
+   - include/ 实现头文件
+   - mist/ 数据库表文件及Google protobuf 定义文件
+   - conf/ 某些程序运行时由于需要的参数比较多，所以统一从配置文件读取这些参数，建议配置文件
+
+     都放在这个目录下。
+
+** 配置文件
+   配置文件的每行均为key="value" 形式,以 # 开头的为注释
+   支持的key如下:
+  - PGURI,连接数据库的URI,egg:postgresql://username:password@server-address/database
+  - image,用于选择初始化的图像集，imageClass为给图像的标签,改语句实际为SQL语句中的where子句，
+
+    所以可以加入其它符合SQL语法的命令。这个值确定好后不要修改，不然会无法读取已经写入的数据！
+  - k ,k-means聚类时使用的k
+  - precision, k-means收敛的精度
+  - maxCount, k-means的最大迭代次数
+  - nresult, 图像检索服务器返回的最大结果数
+  - resultSimilarity, 图像检索服务器返回结果的最小相似度[0,1]
+
+** 使用
+  1) 确定图像集
+     #+BEGIN_SRC sh
+   #假设已经进入工程目录imret下,下面的将从256_Obj..选十个目录作为图像集
+   $ cd imgInfo/img
+   #将图像集放在 10Dir目录
+   $ mkdir 10Dir
+   $ cd 10Dir
+   # 建立DataSet/ 中十个目录到此的软链接
+   $ ln -s ~/imret/DataSet/ImageFiles/256_ObjectCategories/001.ak47/ 1
+   $ ln -s ~/imret/DataSet/ImageFiles/256_ObjectCategories/002.american-flag/ 2
+   # ...重复以上命令直到建立完所有的软链接
+  #+END_SRC
+
+  2) 生成图像集信息并写入数据库
+     #+BEGIN_SRC sh
+   #生成由步骤1)确定的图像集信息
+   $ cd imgInfo
+   #第一个参数为步骤1)的图像集目录, 第二个参数为给该图像集设置的标签,结果会输出到标准输出，
+    使用重定向将结果写到文件,以下命令将图像集10Dir打上10Dir的标签并把结果写到文件10Dir.csv
+   $ ./readImgInfo.sh img/10Dir 10Dir > 10Dir.csv
+   #将图像集数据写入数据库,所需参数为上述命令生成的CSV文件
+   $ ./writeImgInfoDB.sh 10Dir.csv
+  #+END_SRC
+     完成上述步骤之后最后还要修改配置文件，以让其它的操作能够正确读取图像集
+
+     可以直接复制已存在的配置文件PI100.conf,并修改其中的image值，将imageClass修改为在
+     #+BEGIN_SRC sh
+    $ ./readImgInfo.sh img/10Dir 10Dir > 10Dir.csv
+   #+END_SRC
+     命令中使用的标签
+  3) 提取图像集的SIFT特征
+     以下命令针对步骤2)的图像集
+     #+BEGIN_SRC sh
+     $ cd bin
+     #./calcSift 命令用于计算图像集的SIFT特征，并把结果以CSV格式输出到标准输出，
+     #运行时的程序状态会输出到标准错误。使用重定向标准输出将结果写入文件。
+     #为了方便拼接不同数据集，CSV输出没有包含头，需要手工为结果文件写入CSV头
+     $ echo "imageID,position,feature" > ../imgInfo/10DirSIFT.csv
+     $ ./calcSift ../conf/10Dir.conf   >>  ../imgInfo/10DirSIFT.csv
+     #+END_SRC
+  4) 聚类并生成视觉词汇{频率|计数}直方图
+
+     聚类中的相应参数由配置文件提供,对图像集很大数据进行下面的操作会花费很长的时间。
+
+     这种情况下可以使用 nohup 命令，使得退出了远程登录后命令仍在运行。
+     #+BEGIN_SRC sh
+     #第一个参数为配置文件路径，第二个参数为步骤3)生成的CSV文件
+     $ ./featsKmeans ../conf/10Dir.conf ../imgInfo/10DirSIFT.csv
+     #使用nohup的示例
+     $nophup  ./featsKmeans ../conf/10Dir.conf ../imgInfo/10DirSIFT.csv &
+     #+END_SRC
+  5) 提取视觉词汇计数直方图到CSV文件
+     完成了步骤4)之后就可以提取实验数据了。
+
+     下面的命令将生成视觉词汇计数的直方图到文件10DirCount.csv，
+
+     该文件的头为imagepath,image_visual_word
+     #+BEGIN_SRC sh
+     $ ./genData ../conf/10Dir.conf > ../imgInfo/10DirCount.csv
+     #+END_SRC

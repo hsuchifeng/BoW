@@ -1,4 +1,4 @@
-CC	=	g++ -o2
+CC	=	c++
 INCL	=	-I../include  `pkg-config --cflags opencv libpq protobuf`
 LIBS	= 	`pkg-config --libs opencv libpq protobuf` 
 TARGET_PATH	= ../bin

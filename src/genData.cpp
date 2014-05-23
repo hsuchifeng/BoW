@@ -1,3 +1,4 @@
+//输出视觉词汇频率直方图，计数信息
 #include <iostream>
 #include <string>
 #include <map>
@@ -6,13 +7,18 @@
 
 using namespace std;
 int main(int argc,char **argv){
-  int k,i,j;
-  map<string,string> conf; //配置信息
-  readConf(conf,argv[1]); //读取配置信息
-  //read from configuration file
-  k = atoi(conf["k"].c_str());
+  if(argc != 2) {
+    cerr << "以带CSV格式输出视觉词汇计数直方图到标准输出,CSV头为\nimagepath,visual_word_count\n";
+    cerr << "usage: " << argv[0] << " <configuration_file>\n";
+  }
 
   try{
+    int k,i,j;
+    map<string,string> conf; //配置信息
+    readConf(conf,argv[1]); //读取配置信息
+    //read from configuration file
+    k = atoi(conf["k"].c_str());
+
     exData db(conf["image"].c_str(),conf["PGURI"].c_str()); //数据库数据
     map<int,float>::iterator mit;
     cerr<<"reading cluster center and reverse information\n";
